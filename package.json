@@ -1,0 +1,38 @@
+{
+  "name": "nutripilot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "http-server ./public -p 8080",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "format": "prettier --write \"src/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metjanbaduni/NutriPilot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/metjanbaduni/NutriPilot/issues"
+  },
+  "homepage": "https://github.com/metjanbaduni/NutriPilot#readme",
+  "devDependencies": {
+    "eslint": "^9.37.0",
+    "http-server": "^14.1.1",
+    "jest": "^30.2.0",
+    "prettier": "^3.6.2"
+  }
+}

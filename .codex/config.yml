@@ -1,109 +1,52 @@
-# Codex Configuration
 role: developer
 primary_goal: implement_features
+quality_constraints: constitution.md
 
-# Quality constraints
-quality_constraints: .specify/memory/constitution.md
-
-# Context files (updated paths for spec-kit structure)
 context_files:
-  - .specify/memory/constitution.md
-  - .specify/specs/001-nutripilot-mvp/spec.md
-  - .specify/specs/001-nutripilot-mvp/plan.md
-  - .specify/specs/001-nutripilot-mvp/tasks.md
-  - .specify/templates/plan-template.md
-  - .specify/templates/tasks-template.md
+  - spec.md
+  - constitution.md
+  - plan.md
 
-# Custom commands
 commands:
   plan:
     description: "Generate technical implementation plan"
     input_files:
-      - .specify/memory/constitution.md
-      - .specify/specs/001-nutripilot-mvp/spec.md
-      - .specify/templates/plan-template.md
-    output_file: .specify/specs/001-nutripilot-mvp/plan.md
+      - spec.md
+      - constitution.md
+    output_file: plan.md
     template: |
-      Generate a comprehensive technical implementation plan for NutriPilot.
-      
-      READ FIRST:
-      1. .specify/memory/constitution.md - Quality rules, tech constraints, budget
-      2. .specify/specs/001-nutripilot-mvp/spec.md - User stories and requirements
-      3. .specify/templates/plan-template.md - Structure to follow
-      
-      CREATE:
-      A detailed plan in .specify/specs/001-nutripilot-mvp/plan.md that includes:
-      - Architecture overview (AWS Amplify serverless)
-      - Technology stack breakdown
-      - Implementation phases (5 phases)
-      - File structure (complete directory tree)
-      - Data models (DynamoDB schemas)
-      - API endpoints (all Lambda functions)
-      - Testing strategy (80% coverage)
-      - Security considerations
-      - Cost estimates ($0-5/month)
-      - Deployment process
-      
-      Follow ALL constraints from constitution.md.
-      Address ALL user stories from spec.md.
-      Use structure from plan-template.md.
-  
+      Generate a comprehensive technical implementation plan.
+      Read spec.md for requirements.
+      Follow constitution.md standards.
+      Output to plan.md.
+
   tasks:
     description: "Break plan into implementable tasks"
     input_files:
-      - .specify/specs/001-nutripilot-mvp/plan.md
-      - .specify/specs/001-nutripilot-mvp/spec.md
-      - .specify/templates/tasks-template.md
-    output_file: .specify/specs/001-nutripilot-mvp/tasks.md
+      - plan.md
+      - spec.md
+    output_directory: tasks/
     template: |
-      Generate numbered implementation tasks from the plan.
-      
-      READ:
-      - .specify/specs/001-nutripilot-mvp/plan.md
-      - .specify/templates/tasks-template.md
-      
-      CREATE:
-      A task list in .specify/specs/001-nutripilot-mvp/tasks.md with:
-      - Sequential task numbers (001, 002, 003...)
-      - Each task 2-4 hours maximum
-      - Clear dependencies
-      - Specific files to create/modify
-      - Testable acceptance criteria
-      - Implementation notes
-      - Testing requirements
-      
-      Organize by implementation phases from plan.md.
-  
-  implement:
-    description: "Implement the next task from tasks.md"
-    input_files:
-      - .specify/specs/001-nutripilot-mvp/tasks.md
-      - .specify/specs/001-nutripilot-mvp/plan.md
-      - .specify/memory/constitution.md
-    template: |
-      Find the first incomplete task in tasks.md and implement it.
-      
-      STEPS:
-      1. Read tasks.md and identify next task
-      2. Read constitution.md for quality standards
-      3. Read plan.md for architecture context
-      4. Implement all files specified in the task
-      5. Follow ALL constitution rules:
-         - Functions < 50 lines
-         - JSDoc comments
-         - Error handling
-         - 80% test coverage
-      6. Meet all acceptance criteria
-      7. Report what was created and how to test
+      Read plan.md and create individual task files.
+      Each task should be 2-4 hours of work.
+      Output to tasks/ directory.
 
-# Project settings
 architecture_style: serverless-aws
 frameworks:
   - react
-  - vite
-  - tailwind
   - aws-amplify
-  - aws-lambda
-  - dynamodb
-cost_limit: $5-10/month
+cost_limit: $10/month
 test_coverage_minimum: 80%
+
+prompts:
+  speckit.plan: .codex/prompts/speckit.plan.md
+  speckit.specify: .codex/prompts/speckit.specify.md
+  speckit.tasks: .codex/prompts/speckit.tasks.md
+  speckit.constitution: .codex/prompts/speckit.constitution.md
+  speckit.analyze: .codex/prompts/speckit.analyze.md
+  speckit.clarify: .codex/prompts/speckit.clarify.md
+
+output_format: markdown
+language: javascript
+code_style: modular
+agent_name: Codex

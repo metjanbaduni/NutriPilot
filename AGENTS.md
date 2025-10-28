@@ -33,3 +33,10 @@
 ## Environment & Security Tips
 - Use Amplify CLI for infrastructure edits; document notable changes in `docs/`.
 - Exclude `.env` and AWS credentials from commits; rotate secrets immediately if leaked.
+
+## Active Technologies
+- React 18 (Vite build), Node.js 18.x for Lambdas, Jest 30.x for testing + React, AWS Amplify JS SDK, Tailwind CSS, OpenAI GPT-4o-mini, AWS SDK v3 (000-planning-phase)
+- Amazon DynamoDB single-table design (`NutriPilot-<env>`) (000-planning-phase)
+
+## Recent Changes
+- 000-planning-phase: Added React 18 (Vite build), Node.js 18.x for Lambdas, Jest 30.x for testing + React, AWS Amplify JS SDK, Tailwind CSS, OpenAI GPT-4o-mini, AWS SDK v3

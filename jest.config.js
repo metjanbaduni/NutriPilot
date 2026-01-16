@@ -4,6 +4,10 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
+  transform: {
+    '^.+\\.[jt]sx?$': 'babel-jest'
+  },
+  coveragePathIgnorePatterns: ['<rootDir>/src/api/'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/amplify/', '<rootDir>/amplify/#current-cloud-backend/'],
   passWithNoTests: true,
   coverageThreshold: {

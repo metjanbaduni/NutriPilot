@@ -7,9 +7,8 @@ module.exports = {
   transform: {
     '^.+\\.[jt]sx?$': 'babel-jest'
   },
-  coveragePathIgnorePatterns: ['<rootDir>/src/api/'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/amplify/', '<rootDir>/amplify/#current-cloud-backend/'],
-  passWithNoTests: true,
+  passWithNoTests: false,
   coverageThreshold: {
     global: {
       branches: 80,
@@ -23,6 +22,7 @@ module.exports = {
     'src/**/*.jsx',
     '!src/**/*.test.js',
     '!src/aws-exports.js',
-    '!src/index.js'
+    '!src/index.js',
+    '!src/index.jsx'
   ]
 };

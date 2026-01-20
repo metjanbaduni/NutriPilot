@@ -21,7 +21,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 **Purpose**: Establish React 18 + Vite toolchain with Tailwind per implementation plan
 
-- [ ] T001 Update React 18, Vite, Tailwind, Amplify, AWS SDK, and OpenAI dependencies plus dev scripts in `package.json`
+- [x] T001 Update React 18, Vite, Tailwind, Amplify, AWS SDK, and OpenAI dependencies plus dev scripts in `package.json`
 - [ ] T002 Create Vite build configuration with React plugin and `@` alias in `vite.config.js`
 - [ ] T003 [P] Define Tailwind theme tokens and content globs aligned with dashboard mocks in `tailwind.config.js`
 - [ ] T004 [P] Configure PostCSS pipeline (tailwindcss, autoprefixer) in `postcss.config.js`

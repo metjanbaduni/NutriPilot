@@ -8,6 +8,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import postcssConfig from './postcss.config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +20,9 @@ export default defineConfig({
       // Map "@" to ./src for absolute imports like "@/components/Button".
       '@': path.resolve(__dirname, 'src')
     }
+  },
+  css: {
+    postcss: postcssConfig
   },
   server: {
     port: 5173,

@@ -23,10 +23,10 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 - [x] T001 Update React 18, Vite, Tailwind, Amplify, AWS SDK, and OpenAI dependencies plus dev scripts in `package.json`
 - [x] T002 Create Vite build configuration with React plugin and `@` alias in `vite.config.js`
-- [x] T003 [P] Define Tailwind theme tokens and content globs aligned with dashboard mocks in `tailwind.config.js`
-- [ ] T004 [P] Configure PostCSS pipeline (tailwindcss, autoprefixer) in `postcss.config.js`
-- [ ] T005 [P] Add Tailwind base directives and macro color variables in `src/index.css`
-- [ ] T006 Replace static shell with Vite root markup referencing `/src/index.js` in `public/index.html`
+- [x] T003 [P] Define Tailwind theme tokens and content globs aligned with dashboard mocks in `tailwind.config.cjs`
+- [x] T004 [P] Configure PostCSS pipeline (tailwindcss, autoprefixer) in `postcss.config.js`
+- [x] T005 [P] Add Tailwind base directives and macro color variables in `src/index.css`
+- [x] T006 Replace static shell with Vite root markup referencing `/src/index.js` in `public/index.html`
 
 ---
 

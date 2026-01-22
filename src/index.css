@@ -1,18 +1,12 @@
+/* Global styling entrypoint: Tailwind layers and shared design tokens. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  font-family:
-    'Inter',
-    system-ui,
-    -apple-system,
-    sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
-}
-
-body {
-  margin: 0;
+  /* Macro colors for nutrient targets and progress indicators. */
+  --macro-calories: #3b82f6;
+  --macro-protein: #22c55e;
+  --macro-carbs: #f59e0b;
+  --macro-fat: #ef4444;
 }

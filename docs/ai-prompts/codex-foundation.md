@@ -21,7 +21,7 @@ ARCHITECTURE (MANDATORY):
 - No framework or routing changes
 
 CONSTITUTION COMPLIANCE (MANDATORY):
-Follow constitution.md strictly:
+Follow specify/memory/constitution.md strictly:
 - All public functions require JSDoc
 - Functions must be ≤ 50 lines
 - Cyclomatic complexity ≤ 10

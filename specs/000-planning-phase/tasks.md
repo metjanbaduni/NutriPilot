@@ -38,7 +38,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 - [x] T007 Initialize AWS Amplify and render `<App />` via `createRoot` + `BrowserRouter` in `src/index.js`
 - [x] T008 Build the high-level route skeleton with placeholders for `/login`, `/signup`, `/dashboard`, `/settings`, and modal host in `src/components/App.jsx`
-- [ ] T009 Implement `SessionContext` with Amplify `Hub` listeners, Auth token refresh, and `useSession` hook in `src/context/SessionContext.jsx`
+- [X] T009 Implement `SessionContext` with Amplify `Hub` listeners, Auth token refresh, and `useSession` hook in `src/context/SessionContext.jsx`
 - [ ] T010 [P] Add centralized Amplify API client with signed REST helpers and error normalization in `src/api/client.js`
 - [ ] T011 [P] Create reusable DynamoDB DocumentClient factory + env helpers referenced by all Lambdas in `amplify/backend/function/lib/dynamoClient.js`
 - [ ] T012 [P] Configure Jest + React Testing Library setup (RTL matchers, Amplify/Auth mocks) in `tests/setupTests.js` and register it inside `jest.config.js`

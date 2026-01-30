@@ -10,6 +10,13 @@ description: "Task list for NutriPilot MVP Foundation"
 
 Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
+## Execution Defaults (applies to all tasks unless overridden)
+- Scope: Modify only files listed in the task.
+- Standards: Follow spec.md, plan.md, and constitution.md.
+- Testing: Run tests listed on the task; run full suite only at phase checkpoints.
+- Completion: Mark the task [x] in this file when done.
+- Decisions: If a required decision is not specified, stop and ask.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -40,8 +47,20 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - [x] T008 Build the high-level route skeleton with placeholders for `/login`, `/signup`, `/dashboard`, `/settings`, and modal host in `src/components/App.jsx`
 - [X] T009 Implement `SessionContext` with Amplify `Hub` listeners, Auth token refresh, and `useSession` hook in `src/context/SessionContext.jsx`
 - [ ] T010 [P] Add centralized Amplify API client with signed REST helpers and error normalization in `src/api/client.js`
+  - Files: `src/api/client.js`
+  - Notes: Use Amplify `API` + `Auth` for signed requests; no direct `fetch`.
+  - Tests: `tests/api/client.test.js`
+  - Acceptance: Exposes typed `get`/`post` helpers; normalizes errors; injects auth headers.
 - [ ] T011 [P] Create reusable DynamoDB DocumentClient factory + env helpers referenced by all Lambdas in `amplify/backend/function/lib/dynamoClient.js`
+  - Files: `amplify/backend/function/lib/dynamoClient.js`
+  - Notes: Use AWS SDK v3 `DynamoDBClient` + `DynamoDBDocumentClient`; read table name from env.
+  - Tests: `tests/lambdas/dynamoClient.test.js`
+  - Acceptance: Single factory function; predictable config; safe defaults; no network calls in tests.
 - [ ] T012 [P] Configure Jest + React Testing Library setup (RTL matchers, Amplify/Auth mocks) in `tests/setupTests.js` and register it inside `jest.config.js`
+  - Files: `tests/setupTests.js`, `jest.config.js`
+  - Notes: Centralize Amplify/Auth mocks here; keep per-test files lean.
+  - Tests: N/A (setup only)
+  - Acceptance: RTL matchers active; Amplify mocks loaded; Jest uses setup file.
 
 **Checkpoint**: Foundation ready – user story implementation can now begin in parallel
 
@@ -84,6 +103,10 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 - [ ] T021 [US2] Implement profile API helper exposing `fetchProfile` + `saveProfile` using the shared client in `src/api/profile.js`
 - [ ] T022 [P] [US2] Implement macro calculation + validation helper per constitution formulas in `src/utils/calculateMacros.js`
+  - Files: `src/utils/calculateMacros.js`
+  - Notes: Use constitution formulas + validation ranges; export pure functions only.
+  - Tests: `tests/utils/calculateMacros.test.js`
+  - Acceptance: Deterministic outputs; throws on invalid inputs; no side effects.
 - [ ] T023 [US2] Implement `getProfile` Lambda (Auth check, Dynamo query, DTO) in `amplify/backend/function/getProfile/src/index.js`
 - [ ] T024 [US2] Implement `updateProfile` Lambda (schema validation, macro recalculation, Dynamo writes) in `amplify/backend/function/updateProfile/src/index.js`
 - [ ] T025 [US2] Build reusable `ProfileForm` component for onboarding/settings with Tailwind layout in `src/components/profile/ProfileForm.jsx`
@@ -131,9 +154,25 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 - [ ] T036 [US4] Implement meals API helper (`listMeals`, `createMeal`, `analyzeMeal`, `deleteMeal`) with optimistic cache updates in `src/api/meals.js`
 - [ ] T037 [US4] Implement `analyzeMeal` Lambda calling OpenAI GPT-4o-mini, caching by description hash, with Secrets Manager lookup in `amplify/backend/function/analyzeMeal/src/index.js`
+  - Files: `amplify/backend/function/analyzeMeal/src/index.js`
+  - Notes: Secrets Manager lookup for OpenAI key; cache by sha256(description); 10s timeout; retry once on invalid JSON.
+  - Tests: `tests/lambdas/analyzeMeal.test.js`
+  - Acceptance: Returns macros + ingredients; uses cache on hit; normalizes OpenAI errors.
 - [ ] T038 [US4] Implement `saveMeal` Lambda persisting meal, updating summary, and computing calories in `amplify/backend/function/saveMeal/src/index.js`
+  - Files: `amplify/backend/function/saveMeal/src/index.js`
+  - Notes: Validate input; compute calories server-side; update DailySummary atomically if possible.
+  - Tests: `tests/lambdas/saveMeal.test.js`
+  - Acceptance: Writes MEAL + SUMMARY; returns updated totals; rejects invalid inputs.
 - [ ] T039 [US4] Implement `getMeals` Lambda with date-range + limit filters returning ordered meals in `amplify/backend/function/getMeals/src/index.js`
+  - Files: `amplify/backend/function/getMeals/src/index.js`
+  - Notes: Query by PK + SK range; enforce limit max 100; sort by timestamp desc.
+  - Tests: `tests/lambdas/getMeals.test.js`
+  - Acceptance: Returns ordered meals; respects date range and limit; handles empty set.
 - [ ] T040 [US4] Implement `deleteMeal` Lambda that removes meal, recomputes summary, and returns updated totals in `amplify/backend/function/deleteMeal/src/index.js`
+  - Files: `amplify/backend/function/deleteMeal/src/index.js`
+  - Notes: Verify ownership; delete meal; recompute summary from remaining meals.
+  - Tests: `tests/lambdas/deleteMeal.test.js`
+  - Acceptance: Deletes meal; updates summary; idempotent error on missing meal.
 - [ ] T041 [US4] Build `MealModal` component with AI analyze button, manual macro inputs, and validation in `src/components/meals/MealModal.jsx`
 - [ ] T042 [US4] Integrate meal modal triggers, reload hooks, and delete confirmations into dashboard list in `src/components/dashboard/Dashboard.jsx`
 

@@ -34,6 +34,13 @@
 - Use Amplify CLI for infrastructure edits; document notable changes in `docs/`.
 - Exclude `.env` and AWS credentials from commits; rotate secrets immediately if leaked.
 
+## Review Acceptance (Single-Source Policy)
+- Review feedback is **blocking** only if it violates spec.md, plan.md, constitution.md, tasks.md scope, or required tests.
+- Required tests must exist and pass when the task lists them; missing/failed required tests are blocking.
+- Feedback outside task scope, stylistic preferences, or optional refactors are **non-blocking**.
+- If a decision is unspecified, stop and ask before proceeding.
+- When in doubt, resolve against the highest-priority docs: AGENTS.md → spec.md → plan.md → constitution.md → tasks.md.
+
 ## Active Technologies
 - React 18 (Vite build), Node.js 18.x for Lambdas, Jest 30.x for testing + React, AWS Amplify JS SDK, Tailwind CSS, OpenAI GPT-4o-mini, AWS SDK v3 (000-planning-phase)
 - Amazon DynamoDB single-table design (`NutriPilot-<env>`) (000-planning-phase)

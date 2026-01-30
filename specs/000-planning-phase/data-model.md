@@ -29,7 +29,7 @@
 - **Fields**: `mealId` (UUID), `description`, `mealType`, `date` (YYYY-MM-DD), `macros {protein, carbs, fats, calories}`, `aiAnalyzed`, `ingredients[]`, `timestamp`, `createdAt`
 - **Relationships**: Aggregated into `DailySummary`; optional link to `MealAnalysisCache` via `analysisHash`
 - **Validation**:
-  - `mealType`: enum `['Breakfast','Lunch','Dinner','Snack','Post-Workout']`
+  - `mealType`: enum `['Breakfast','Lunch','Dinner','Snack']`
   - `date`: ISO date within ±30 days from today
   - Macro values >= 0 and <= 300; calories recomputed server-side
   - If `aiAnalyzed = true`, require non-empty `description`

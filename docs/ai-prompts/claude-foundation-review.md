@@ -42,6 +42,10 @@ REVIEW CHECKLIST:
 - Edge cases covered?
 - Coverage likely ≥ 80%?
 
+REVIEW ACCEPTANCE (BLOCKING-ONLY):
+- Only report issues that violate AGENTS.md (spec/plan/constitution/tasks/tests).
+- Ignore stylistic preferences or scope-expanding suggestions.
+
 RESPONSE FORMAT (MANDATORY):
 - Overall verdict: APPROVE or REQUEST CHANGES
 - If REQUEST CHANGES:

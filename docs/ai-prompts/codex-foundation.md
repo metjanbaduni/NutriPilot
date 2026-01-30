@@ -4,6 +4,9 @@ Use this template for **FOUNDATION tasks only**
 
 You are implementing Task {TASK_ID}: {TASK_NAME} from tasks.md.
 
+CONSTITUTION PATH:
+- `.specify/memory/constitution.md`
+
 SCOPE (STRICT – NO EXCEPTIONS):
 - Modify ONLY these files:
   - {file1}

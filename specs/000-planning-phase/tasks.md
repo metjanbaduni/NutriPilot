@@ -12,7 +12,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 ## Execution Defaults (applies to all tasks unless overridden)
 - Scope: Modify only files listed in the task.
-- Standards: Follow spec.md, plan.md, and constitution.md.
+- Standards: Follow spec.md, plan.md, and .specify/memory/constitution.md.
 - Testing: Run tests listed on the task; run full suite only at phase checkpoints.
 - Completion: Mark the task [x] in this file when done.
 - Decisions: If a required decision is not specified, stop and ask.
@@ -46,12 +46,12 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - [x] T007 Initialize AWS Amplify and render `<App />` via `createRoot` + `BrowserRouter` in `src/index.js`
 - [x] T008 Build the high-level route skeleton with placeholders for `/login`, `/signup`, `/dashboard`, `/settings`, and modal host in `src/components/App.jsx`
 - [X] T009 Implement `SessionContext` with Amplify `Hub` listeners, Auth token refresh, and `useSession` hook in `src/context/SessionContext.jsx`
-- [ ] T010 [P] Add centralized Amplify API client with signed REST helpers and error normalization in `src/api/client.js`
+- [x] T010 [P] Add centralized Amplify API client with signed REST helpers and error normalization in `src/api/client.js`
   - Files: `src/api/client.js`
   - Notes: Use Amplify `API` + `Auth` for signed requests; no direct `fetch`.
   - Tests: `tests/api/client.test.js`
   - Acceptance: Exposes typed `get`/`post` helpers; normalizes errors; injects auth headers.
-- [ ] T011 [P] Create reusable DynamoDB DocumentClient factory + env helpers referenced by all Lambdas in `amplify/backend/function/lib/dynamoClient.js`
+- [x] T011 [P] Create reusable DynamoDB DocumentClient factory + env helpers referenced by all Lambdas in `amplify/backend/function/lib/dynamoClient.js`
   - Files: `amplify/backend/function/lib/dynamoClient.js`
   - Notes: Use AWS SDK v3 `DynamoDBClient` + `DynamoDBDocumentClient`; read table name from env.
   - Tests: `tests/lambdas/dynamoClient.test.js`

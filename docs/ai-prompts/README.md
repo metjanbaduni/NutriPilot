@@ -17,13 +17,13 @@ The goal is to:
 ## How This Fits Into the Master Guide
 
 - Master Guide → philosophy, governance, quality gates
-- spec.md / plan.md / constitution.md → source of truth
+- spec.md / plan.md / .specify/memory/constitution.md → source of truth
 - tasks.md → execution contract
 - docs/ai-prompts/ → enforcement layer
 
 If there is a conflict:
 1. spec.md and plan.md win
-2. constitution.md wins
+2. .specify/memory/constitution.md wins
 3. tasks.md wins
 4. These prompts win
 5. AI agent output loses
@@ -62,6 +62,6 @@ These prompts are NOT meant to:
 - Replace spec.md
 - Teach programming
 - Explore alternatives
-- Improve code style beyond constitution.md
+- Improve code style beyond .specify/memory/constitution.md
 
 They exist to **control execution**, not creativity.

@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { Auth, Hub } from 'aws-amplify';
+import { getCurrentUser } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
 import { SessionProvider, useSession } from '../../../src/context/SessionContext';
 
 const createUnauthenticatedError = () => {
@@ -47,15 +48,13 @@ function UnsafeSessionReader() {
 
 describe('SessionContext', () => {
   beforeEach(() => {
-    Auth.currentAuthenticatedUser.mockReset();
-    Auth.currentSession.mockReset();
+    getCurrentUser.mockReset();
     Hub.listen.mockClear();
-    Hub.remove.mockClear();
   });
 
   test('initializes unauthenticated state when no session exists', async () => {
     // Arrange
-    Auth.currentAuthenticatedUser.mockRejectedValueOnce(createUnauthenticatedError());
+    getCurrentUser.mockRejectedValueOnce(createUnauthenticatedError());
 
     // Act
     render(
@@ -72,12 +71,28 @@ describe('SessionContext', () => {
     });
   });
 
+  test('treats "No current user" error message as unauthenticated', async () => {
+    // Arrange
+    getCurrentUser.mockRejectedValueOnce(new Error('No current user'));
+
+    // Act
+    render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('anon');
+      expect(screen.getByTestId('email').textContent).toBe('none');
+    });
+  });
+
   test('moves to authenticated state after sign-in Hub event', async () => {
     // Arrange
     const user = { email: 'session@example.com' };
-    Auth.currentAuthenticatedUser
-      .mockRejectedValueOnce(createUnauthenticatedError())
-      .mockResolvedValueOnce(user);
+    getCurrentUser.mockRejectedValueOnce(createUnauthenticatedError()).mockResolvedValueOnce(user);
 
     // Act
     render(
@@ -105,15 +120,39 @@ describe('SessionContext', () => {
       expect(screen.getByTestId('auth').textContent).toBe('auth');
       expect(screen.getByTestId('email').textContent).toBe(user.email);
     });
-    expect(Auth.currentAuthenticatedUser).toHaveBeenCalledTimes(2);
+    expect(getCurrentUser).toHaveBeenCalledTimes(2);
+  });
+
+  test('ignores non-session Hub events', async () => {
+    // Arrange
+    const user = { email: 'ignored@example.com' };
+    getCurrentUser.mockResolvedValueOnce(user);
+
+    // Act
+    render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('auth');
+    });
+
+    const authListener = Hub.listen.mock.calls[0][1];
+
+    act(() => {
+      authListener({ payload: { event: 'customEvent' } });
+    });
+
+    // Assert
+    expect(getCurrentUser).toHaveBeenCalledTimes(1);
   });
 
   test('moves to unauthenticated state after sign-out Hub event', async () => {
     // Arrange
     const user = { email: 'signedin@example.com' };
-    Auth.currentAuthenticatedUser
-      .mockResolvedValueOnce(user)
-      .mockRejectedValueOnce(createUnauthenticatedError());
+    getCurrentUser.mockResolvedValueOnce(user).mockRejectedValueOnce(createUnauthenticatedError());
 
     // Act
     render(
@@ -146,9 +185,7 @@ describe('SessionContext', () => {
   test('refreshes session after token refresh Hub event', async () => {
     // Arrange
     const user = { email: 'refresh@example.com' };
-    Auth.currentAuthenticatedUser
-      .mockRejectedValueOnce(createUnauthenticatedError())
-      .mockResolvedValueOnce(user);
+    getCurrentUser.mockRejectedValueOnce(createUnauthenticatedError()).mockResolvedValueOnce(user);
 
     // Act
     render(
@@ -191,13 +228,12 @@ describe('SessionContext', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test('surfaces fatal errors when currentSession rejects', async () => {
+  test('surfaces fatal errors when session refresh throws', async () => {
     // Arrange
     const sessionError = new Error('Session refresh failed');
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    Auth.currentSession.mockRejectedValueOnce(sessionError);
-    Auth.currentAuthenticatedUser.mockImplementation(() => Auth.currentSession());
+    getCurrentUser.mockRejectedValueOnce(sessionError);
 
     // Act
     render(
@@ -216,12 +252,12 @@ describe('SessionContext', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test('surfaces fatal errors when currentAuthenticatedUser throws unexpected error', async () => {
+  test('surfaces fatal errors when getCurrentUser throws unexpected error', async () => {
     // Arrange
     const networkError = new Error('Network failure');
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    Auth.currentAuthenticatedUser.mockRejectedValueOnce(networkError);
+    getCurrentUser.mockRejectedValueOnce(networkError);
 
     // Act
     render(

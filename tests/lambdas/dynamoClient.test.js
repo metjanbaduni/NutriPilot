@@ -2,19 +2,19 @@ const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
 
 jest.mock('@aws-sdk/client-dynamodb', () => ({
-  DynamoDBClient: jest.fn().mockImplementation((config) => ({ __config: config }))
+  DynamoDBClient: jest.fn().mockImplementation((config) => ({ __config: config })),
 }));
 
 jest.mock('@aws-sdk/lib-dynamodb', () => ({
   DynamoDBDocumentClient: {
-    from: jest.fn((client, options) => ({ client, options }))
-  }
+    from: jest.fn((client, options) => ({ client, options })),
+  },
 }));
 
 const {
   getAwsRegion,
   getTableName,
-  getDynamoDocClient
+  getDynamoDocClient,
 } = require('../../amplify/backend/function/lib/dynamoClient');
 
 describe('dynamoClient helpers', () => {

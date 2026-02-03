@@ -6,36 +6,38 @@
  */
 import '@testing-library/jest-dom';
 
-// Mock Amplify Auth/Hub/API to avoid live AWS calls in tests.
-jest.mock('aws-amplify', () => {
-  const actual = jest.requireActual('aws-amplify');
-  const createUnauthenticatedError = () => {
-    const error = new Error('The user is not authenticated');
-    error.name = 'NotAuthenticatedException';
-    return error;
-  };
-  return {
-    ...actual,
-    Amplify: {
-      configure: jest.fn(),
-    },
-    Auth: {
-      signIn: jest.fn(),
-      signOut: jest.fn(),
-      // Default to unauthenticated to keep session tests deterministic.
-      currentAuthenticatedUser: jest.fn(() => Promise.reject(createUnauthenticatedError())),
-      currentSession: jest.fn(),
-      signUp: jest.fn(),
-    },
-    Hub: {
-      listen: jest.fn(),
-      remove: jest.fn(),
-    },
-    API: {
-      get: jest.fn(),
-      post: jest.fn(),
-      put: jest.fn(),
-      del: jest.fn(),
-    },
-  };
-});
+const createUnauthenticatedError = () => {
+  const error = new Error('The user is not authenticated');
+  error.name = 'NotAuthenticatedException';
+  return error;
+};
+
+// Mock Amplify API to avoid live AWS calls in tests.
+jest.mock('aws-amplify', () => ({
+  Amplify: {
+    configure: jest.fn(),
+  },
+  API: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    del: jest.fn(),
+  },
+}));
+
+// Mock Amplify Auth module for authentication flows.
+jest.mock('aws-amplify/auth', () => ({
+  signIn: jest.fn(),
+  signOut: jest.fn(),
+  signUp: jest.fn(),
+  confirmSignUp: jest.fn(),
+  getCurrentUser: jest.fn(() => Promise.reject(createUnauthenticatedError())),
+  fetchAuthSession: jest.fn(),
+}));
+
+// Mock Amplify Hub utilities for auth events.
+jest.mock('aws-amplify/utils', () => ({
+  Hub: {
+    listen: jest.fn(() => jest.fn()),
+  },
+}));

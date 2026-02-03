@@ -66,11 +66,6 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
   - Notes: Enable React Router future flags to silence warnings; keep session state deterministic.
   - Tests: `npm test -- tests/app.test.jsx`
   - Acceptance: No router or act warnings in app test run.
-- [ ] T012A [P] Fix router + act warnings in `tests/app.test.jsx` by using MemoryRouter and stable session mocks
-  - Files: `tests/app.test.jsx`, `tests/setupTests.js`
-  - Notes: Wrap App in MemoryRouter with explicit routes; ensure SessionProvider updates are awaited to avoid act warnings.
-  - Tests: `tests/app.test.jsx`
-  - Acceptance: No "No routes matched location" warning; dashboard assertion passes; act warnings resolved.
 
 **Checkpoint**: Foundation ready – user story implementation can now begin in parallel
 
@@ -85,14 +80,29 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 ### Tests for User Story 1 ⚠️
 
 - [x] T013 [P] [US1] Cover session context state transitions and Hub events in `tests/components/auth/SessionContext.test.jsx`
-- [ ] T014 [P] [US1] Validate login + registration form flows (client-side validation, error banners) in `tests/components/auth/LoginForm.test.jsx`
+- [x] T014 [P] [US1] Validate login + registration form flows (client-side validation, error banners) in `tests/components/auth/LoginForm.test.jsx`
+- [x] T014A [P] [US1] Add RegisterForm tests to restore coverage after US1 implementation (added post-review)
+  - Files: `tests/components/auth/RegisterForm.test.jsx`
+  - Notes: Added after coverage run revealed gaps; cover validation, confirmation, and error banners.
+  - Tests: `tests/components/auth/RegisterForm.test.jsx`
+  - Acceptance: Happy path + error paths for signUp/confirmSignUp; validation messages match spec.
+- [x] T017A [P] [US1] Add AuthGate tests to cover auth guard behavior (added post-review)
+  - Files: `tests/components/auth/AuthGate.test.jsx`
+  - Notes: Added after coverage run revealed gaps; cover loading, redirect, and signOut.
+  - Tests: `tests/components/auth/AuthGate.test.jsx`
+  - Acceptance: Loading state, unauthenticated redirect, authenticated render, signOut call.
+- [x] T018A [P] [US1] Expand App routing tests for protected and auth routes (added post-review)
+  - Files: `tests/app.test.jsx`
+  - Notes: Added after coverage run revealed gaps; cover /login, /signup, /dashboard redirects.
+  - Tests: `tests/app.test.jsx`
+  - Acceptance: Auth routes render forms, protected routes redirect unauthenticated users.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implement Amplify-driven login form with email/password validation and error messaging in `src/components/auth/LoginForm.jsx`
-- [ ] T016 [P] [US1] Implement registration + confirmation flow with password policy checks in `src/components/auth/RegisterForm.jsx`
-- [ ] T017 [US1] Implement `AuthGate` component to guard children, handle loading states, and expose `signOut` in `src/components/auth/AuthGate.jsx`
-- [ ] T018 [US1] Wire `/login` + `/signup` routes, mount `AuthGate` around app routes, and redirect post-auth in `src/components/App.jsx`
+- [x] T015 [US1] Implement Amplify-driven login form with email/password validation and error messaging in `src/components/auth/LoginForm.jsx`
+- [x] T016 [P] [US1] Implement registration + confirmation flow with password policy checks in `src/components/auth/RegisterForm.jsx`
+- [x] T017 [US1] Implement `AuthGate` component to guard children, handle loading states, and expose `signOut` in `src/components/auth/AuthGate.jsx`
+- [x] T018 [US1] Wire `/login` + `/signup` routes, mount `AuthGate` around app routes, and redirect post-auth in `src/components/App.jsx`
 
 **Checkpoint**: Authentication shell protects all private routes and supports sign-out
 

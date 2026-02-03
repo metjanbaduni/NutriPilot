@@ -1,4 +1,5 @@
-const { API, Auth } = require('aws-amplify');
+const { API } = require('aws-amplify');
+const { fetchAuthSession } = require('aws-amplify/auth');
 const { get, post } = require('../../src/api/client');
 
 describe('api client', () => {
@@ -7,14 +8,16 @@ describe('api client', () => {
   const DEFAULT_ERROR_MESSAGE = 'Request failed';
   const SESSION_TOKEN = 'fake-jwt-token';
   const sessionStub = {
-    getIdToken: () => ({
-      getJwtToken: () => SESSION_TOKEN,
-    }),
+    tokens: {
+      idToken: {
+        toString: () => SESSION_TOKEN,
+      },
+    },
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    Auth.currentSession = jest.fn().mockResolvedValue(sessionStub);
+    fetchAuthSession.mockResolvedValue(sessionStub);
   });
 
   test('get throws normalized error when path is empty', async () => {
@@ -43,10 +46,12 @@ describe('api client', () => {
 
   test('get throws normalized error when token is missing', async () => {
     // Arrange
-    Auth.currentSession.mockResolvedValue({
-      getIdToken: () => ({
-        getJwtToken: () => null,
-      }),
+    fetchAuthSession.mockResolvedValue({
+      tokens: {
+        idToken: {
+          toString: () => null,
+        },
+      },
     });
 
     // Act
@@ -72,7 +77,7 @@ describe('api client', () => {
     });
 
     // Assert
-    expect(Auth.currentSession).toHaveBeenCalled();
+    expect(fetchAuthSession).toHaveBeenCalled();
     expect(API.get).toHaveBeenCalledWith(API_NAME, '/profile', {
       headers: { [AUTH_HEADER_NAME]: SESSION_TOKEN, 'X-Trace-Id': traceId },
       queryStringParameters: { include: 'targets' },
@@ -129,7 +134,7 @@ describe('api client', () => {
 
   test('post throws normalized error when auth fails', async () => {
     // Arrange
-    Auth.currentSession.mockRejectedValue(new Error('nope'));
+    fetchAuthSession.mockRejectedValue(new Error('nope'));
 
     // Act
     const action = post('/profile', { body: { name: 'Alex' } });

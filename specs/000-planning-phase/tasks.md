@@ -56,11 +56,21 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
   - Notes: Use AWS SDK v3 `DynamoDBClient` + `DynamoDBDocumentClient`; read table name from env.
   - Tests: `tests/lambdas/dynamoClient.test.js`
   - Acceptance: Single factory function; predictable config; safe defaults; no network calls in tests.
-- [ ] T012 [P] Configure Jest + React Testing Library setup (RTL matchers, Amplify/Auth mocks) in `tests/setupTests.js` and register it inside `jest.config.js`
+- [x] T012 [P] Configure Jest + React Testing Library setup (RTL matchers, Amplify/Auth mocks) in `tests/setupTests.js` and register it inside `jest.config.js`
   - Files: `tests/setupTests.js`, `jest.config.js`
   - Notes: Centralize Amplify/Auth mocks here; keep per-test files lean.
   - Tests: N/A (setup only)
   - Acceptance: RTL matchers active; Amplify mocks loaded; Jest uses setup file.
+- [x] T012A [P] Fix router + act warnings in `tests/app.test.jsx` by using MemoryRouter and stable session mocks
+  - Files: `tests/app.test.jsx`, `tests/setupTests.js`
+  - Notes: Enable React Router future flags to silence warnings; keep session state deterministic.
+  - Tests: `npm test -- tests/app.test.jsx`
+  - Acceptance: No router or act warnings in app test run.
+- [ ] T012A [P] Fix router + act warnings in `tests/app.test.jsx` by using MemoryRouter and stable session mocks
+  - Files: `tests/app.test.jsx`, `tests/setupTests.js`
+  - Notes: Wrap App in MemoryRouter with explicit routes; ensure SessionProvider updates are awaited to avoid act warnings.
+  - Tests: `tests/app.test.jsx`
+  - Acceptance: No "No routes matched location" warning; dashboard assertion passes; act warnings resolved.
 
 **Checkpoint**: Foundation ready – user story implementation can now begin in parallel
 

@@ -8,8 +8,10 @@ module.exports = {
     '^.+\\.[jt]sx?$': 'babel-jest'
   },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/amplify/', '<rootDir>/amplify/#current-cloud-backend/'],
+  modulePathIgnorePatterns: ['<rootDir>/amplify/#current-cloud-backend/'],
   passWithNoTests: false,
   coverageThreshold: {
+    // Thresholds align with constitution.md 80% coverage minimums.
     global: {
       branches: 80,
       functions: 80,

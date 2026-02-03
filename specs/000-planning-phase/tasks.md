@@ -84,7 +84,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T013 [P] [US1] Cover session context state transitions and Hub events in `tests/components/auth/SessionContext.test.jsx`
+- [x] T013 [P] [US1] Cover session context state transitions and Hub events in `tests/components/auth/SessionContext.test.jsx`
 - [ ] T014 [P] [US1] Validate login + registration form flows (client-side validation, error banners) in `tests/components/auth/LoginForm.test.jsx`
 
 ### Implementation for User Story 1

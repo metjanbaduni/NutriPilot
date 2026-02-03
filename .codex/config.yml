@@ -7,6 +7,14 @@ context_files:
   - constitution.md
   - plan.md
 
+prompts:
+  speckit.plan: .codex/prompts/speckit.plan.md
+  speckit.specify: .codex/prompts/speckit.specify.md
+  speckit.tasks: .codex/prompts/speckit.tasks.md
+  speckit.constitution: .codex/prompts/speckit.constitution.md
+  speckit.analyze: .codex/prompts/speckit.analyze.md
+  speckit.clarify: .codex/prompts/speckit.clarify.md
+
 commands:
   plan:
     description: "Generate technical implementation plan"
@@ -37,14 +45,6 @@ frameworks:
   - aws-amplify
 cost_limit: $10/month
 test_coverage_minimum: 80%
-
-prompts:
-  speckit.plan: .codex/prompts/speckit.plan.md
-  speckit.specify: .codex/prompts/speckit.specify.md
-  speckit.tasks: .codex/prompts/speckit.tasks.md
-  speckit.constitution: .codex/prompts/speckit.constitution.md
-  speckit.analyze: .codex/prompts/speckit.analyze.md
-  speckit.clarify: .codex/prompts/speckit.clarify.md
 
 output_format: markdown
 language: javascript

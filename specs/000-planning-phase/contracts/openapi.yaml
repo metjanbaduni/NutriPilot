@@ -1,0 +1,325 @@
+openapi: 3.1.0
+info:
+  title: NutriPilot MVP API
+  version: 1.0.0
+  summary: REST endpoints deployed via AWS API Gateway + Lambda for NutriPilot macro tracking.
+servers:
+  - url: https://api.nutripilot.com/dev
+    description: Amplify dev environment
+security:
+  - cognitoJwt: []
+components:
+  securitySchemes:
+    cognitoJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ProfileRequest:
+      type: object
+      required: [bodyWeight, height, age, gender, activityLevel, goal]
+      properties:
+        bodyWeight:
+          type: number
+          minimum: 30
+          maximum: 250
+        height:
+          type: number
+          minimum: 120
+          maximum: 220
+        age:
+          type: integer
+          minimum: 16
+          maximum: 80
+        gender:
+          type: string
+          enum: [male, female, nonbinary, prefer_not_to_say]
+        activityLevel:
+          type: string
+          enum: [sedentary, light, moderate, active, athlete]
+        goal:
+          type: string
+          enum: [bulk, maintain, cut]
+    Profile:
+      type: object
+      required: [email, bodyWeight, height, age, gender, activityLevel, goal, updatedAt]
+      properties:
+        email:
+          type: string
+          format: email
+        bodyWeight: { type: number }
+        height: { type: number }
+        age: { type: integer }
+        gender: { type: string }
+        activityLevel: { type: string }
+        goal: { type: string }
+        updatedAt:
+          type: string
+          format: date-time
+    Targets:
+      type: object
+      required: [protein, carbs, fats, calories, calculatedAt]
+      properties:
+        protein: { type: number }
+        carbs: { type: number }
+        fats: { type: number }
+        calories: { type: number }
+        calculatedAt:
+          type: string
+          format: date-time
+    MacroBreakdown:
+      type: object
+      required: [protein, carbs, fats, calories]
+      properties:
+        protein: { type: number }
+        carbs: { type: number }
+        fats: { type: number }
+        calories: { type: number }
+    MealIngredient:
+      type: object
+      required: [item, quantity, protein, carbs, fats]
+      properties:
+        item: { type: string }
+        quantity: { type: string }
+        protein: { type: number }
+        carbs: { type: number }
+        fats: { type: number }
+    Meal:
+      type: object
+      required: [mealId, description, mealType, date, macros, aiAnalyzed]
+      properties:
+        mealId: { type: string, format: uuid }
+        description: { type: string }
+        mealType: { type: string }
+        date: { type: string, format: date }
+        macros: { $ref: '#/components/schemas/MacroBreakdown' }
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/MealIngredient'
+        aiAnalyzed: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    DailyTotals:
+      type: object
+      required: [protein, carbs, fats, calories, mealCount]
+      properties:
+        protein: { type: number }
+        carbs: { type: number }
+        fats: { type: number }
+        calories: { type: number }
+        mealCount: { type: integer }
+    Dashboard:
+      type: object
+      required: [date, profile, targets, totals, progress, meals, mealCount, targetsMet]
+      properties:
+        date: { type: string, format: date }
+        profile: { $ref: '#/components/schemas/Profile' }
+        targets: { $ref: '#/components/schemas/Targets' }
+        totals: { $ref: '#/components/schemas/DailyTotals' }
+        progress:
+          type: object
+          additionalProperties:
+            type: number
+        meals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Meal'
+        mealCount: { type: integer }
+        targetsMet:
+          type: object
+          properties:
+            protein: { type: boolean }
+            carbs: { type: boolean }
+            fats: { type: boolean }
+            calories: { type: boolean }
+    DeleteMealResponse:
+      type: object
+      required: [success, deletedMealId, updatedDailyTotals]
+      properties:
+        success: { type: boolean }
+        deletedMealId: { type: string }
+        updatedDailyTotals: { $ref: '#/components/schemas/DailyTotals' }
+    MealInput:
+      type: object
+      required: [mealType]
+      properties:
+        description:
+          type: string
+          minLength: 1
+        mealType:
+          type: string
+          enum: [Breakfast, Lunch, Dinner, Snack, Post-Workout]
+        manualMacros:
+          type: object
+          additionalProperties: false
+          properties:
+            protein: { type: number, minimum: 0 }
+            carbs: { type: number, minimum: 0 }
+            fats: { type: number, minimum: 0 }
+
+paths:
+  /api/profile:
+    post:
+      summary: Update profile metrics and recalculate targets.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileRequest'
+      responses:
+        '200':
+          description: Profile and recalculated targets.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, profile, targets]
+                properties:
+                  success: { type: boolean }
+                  profile: { $ref: '#/components/schemas/Profile' }
+                  targets: { $ref: '#/components/schemas/Targets' }
+    get:
+      summary: Fetch profile and targets for the authenticated user.
+      responses:
+        '200':
+          description: Profile payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, profile, targets]
+                properties:
+                  success: { type: boolean }
+                  profile: { $ref: '#/components/schemas/Profile' }
+                  targets: { $ref: '#/components/schemas/Targets' }
+
+  /api/meals:
+    post:
+      summary: Log a meal; optional AI analysis.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealInput'
+      responses:
+        '200':
+          description: Saved meal and updated totals.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, meal, dailyTotals]
+                properties:
+                  success: { type: boolean }
+                  meal: { $ref: '#/components/schemas/Meal' }
+                  dailyTotals: { $ref: '#/components/schemas/DailyTotals' }
+    get:
+      summary: Fetch meal history in a date range.
+      parameters:
+        - in: query
+          name: startDate
+          schema: { type: string, format: date }
+        - in: query
+          name: endDate
+          schema: { type: string, format: date }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: Meal list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, meals, count]
+                properties:
+                  success: { type: boolean }
+                  meals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Meal'
+                  count: { type: integer }
+
+  /api/meals/analyze:
+    post:
+      summary: Run AI macro analysis without saving.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Analysis result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, macros]
+                properties:
+                  success: { type: boolean }
+                  macros: { $ref: '#/components/schemas/MacroBreakdown' }
+                  ingredients:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MealIngredient'
+
+  /api/dashboard:
+    get:
+      summary: Fetch dashboard summary for current day.
+      responses:
+        '200':
+          description: Dashboard payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, date, profile, targets, totals, progress, meals, mealCount, targetsMet]
+                properties:
+                  success: { type: boolean }
+                  date: { type: string, format: date }
+                  profile: { $ref: '#/components/schemas/Profile' }
+                  targets: { $ref: '#/components/schemas/Targets' }
+                  totals: { $ref: '#/components/schemas/DailyTotals' }
+                  progress:
+                    type: object
+                    additionalProperties: { type: number }
+                  meals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Meal'
+                  mealCount: { type: integer }
+                  targetsMet:
+                    type: object
+                    properties:
+                      protein: { type: boolean }
+                      carbs: { type: boolean }
+                      fats: { type: boolean }
+                      calories: { type: boolean }
+
+  /api/meals/{mealId}:
+    delete:
+      summary: Delete a meal and recalculate daily totals.
+      parameters:
+        - in: path
+          name: mealId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deletion confirmation and updated totals.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteMealResponse'

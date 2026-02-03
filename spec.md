@@ -136,10 +136,10 @@ amplify push function saveMeal
   PK: "USER#<userId>",
   SK: "PROFILE",
   email: "user@example.com",
-  bodyWeight: 78,      // kg
-  height: 183,         // cm
-  age: 34,
-  gender: "Male",
+  bodyWeightKg: 78,
+  heightCm: 183,
+  ageYears: 34,
+  gender: "male",
   activityLevel: "moderate",
   goal: "bulk",
   createdAt: 1697452800000,
@@ -152,10 +152,11 @@ amplify push function saveMeal
 {
   PK: "USER#<userId>",
   SK: "TARGETS",
-  protein: 180,        // grams
-  carbs: 360,
-  fats: 79,
+  proteinGrams: 180,
+  carbGrams: 360,
+  fatGrams: 79,
   calories: 2875,
+  tdee: 2500,
   calculatedAt: 1697452800000
 }
 ```
@@ -175,7 +176,8 @@ amplify push function saveMeal
     fats: 20,
     calories: 450
   },
-  detailedBreakdown: [...],  // Optional, from AI
+  ingredients: [...],  // Optional, from AI
+  analysisHash: "sha256:...",
   aiAnalyzed: true,
   timestamp: 1697452800000,
   createdAt: 1697452800000
@@ -197,8 +199,11 @@ amplify push function saveMeal
   mealCount: 3,
   targetsMet: {
     protein: false,
+    carbs: false,
+    fats: false,
     calories: false
-  }
+  },
+  lastMealTimestamp: 1697452800000
 }
 ```
 
@@ -212,10 +217,10 @@ amplify push function saveMeal
 **Request:**
 ```json
 {
-  "bodyWeight": 78,
-  "height": 183,
-  "age": 34,
-  "gender": "Male",
+  "bodyWeightKg": 78,
+  "heightCm": 183,
+  "ageYears": 34,
+  "gender": "male",
   "activityLevel": "moderate",
   "goal": "bulk"
 }
@@ -227,10 +232,11 @@ amplify push function saveMeal
   "success": true,
   "profile": {...},
   "targets": {
-    "protein": 180,
-    "carbs": 360,
-    "fats": 79,
-    "calories": 2875
+    "proteinGrams": 180,
+    "carbGrams": 360,
+    "fatGrams": 79,
+    "calories": 2875,
+    "tdee": 2500
   }
 }
 ```

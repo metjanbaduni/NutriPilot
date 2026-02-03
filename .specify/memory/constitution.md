@@ -259,6 +259,120 @@ describe('calculateDailyProteinTarget', () => {
     expect(calculateDailyProteinTarget(75.5, 'bulk')).toBe(181.2);
   });
 });
+
+### Async Testing Patterns
+
+**Standard patterns for async/await and promise rejection:**
+```javascript
+test('await resolves with value', async () => {
+  const result = await fetchProfile();
+  expect(result.email).toBe('user@example.com');
+});
+
+test('promise rejection is asserted', async () => {
+  await expect(saveMeal(undefined)).rejects.toThrow('Invalid meal data');
+});
+
+test('timeout guarded with fake timers', async () => {
+  jest.useFakeTimers();
+  const promise = analyzeMeal('chicken');
+  jest.advanceTimersByTime(10000);
+  await expect(promise).rejects.toThrow('Timed out');
+  jest.useRealTimers();
+});
+```
+
+### Mocking Standards (AWS and External APIs)
+
+**DynamoDB (AWS SDK v3) with @aws-sdk/client-dynamodb and @aws-sdk/lib-dynamodb:**
+```javascript
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { mockClient } from 'aws-sdk-client-mock';
+import { GetCommand } from '@aws-sdk/lib-dynamodb';
+
+const ddbMock = mockClient(DynamoDBClient);
+
+beforeEach(() => ddbMock.reset());
+
+test('queries profile item', async () => {
+  ddbMock.on(GetCommand).resolves({ Item: { PK: 'USER#1', SK: 'PROFILE' } });
+  const profile = await getProfile('1');
+  expect(profile).toMatchObject({ PK: 'USER#1' });
+});
+```
+
+**OpenAI (HTTP) using nock:**
+```javascript
+import nock from 'nock';
+
+afterEach(() => nock.cleanAll());
+
+test('parses OpenAI response', async () => {
+  nock('https://api.openai.com')
+    .post('/v1/chat/completions')
+    .reply(200, { choices: [{ message: { content: '{"protein":30}' } }] });
+
+  const result = await analyzeMeal('eggs');
+  expect(result.macros.protein).toBe(30);
+});
+```
+
+**Amplify Auth/Cognito and Hub events:**
+```javascript
+import { Auth, Hub } from 'aws-amplify';
+
+jest.mock('aws-amplify');
+
+test('signIn handles success', async () => {
+  Auth.signIn.mockResolvedValue({ username: 'user@example.com' });
+  const session = await login('user@example.com', 'Password1');
+  expect(session.username).toBe('user@example.com');
+});
+
+test('Hub event updates session', () => {
+  const callback = jest.fn();
+  Hub.listen.mockImplementation((channel, handler) => {
+    handler({ payload: { event: 'signOut' } });
+  });
+  subscribeToAuth(callback);
+  expect(callback).toHaveBeenCalledWith({ event: 'signOut' });
+});
+```
+
+### Integration Test Standards
+
+- Use integration tests when exercising multiple modules (e.g., Lambda handler + Dynamo client + validation helper) or when testing end-to-end REST flows.
+- Default isolation: mock external services (OpenAI, Cognito) and AWS network calls unless running inside localstack/Amplify mock; no live AWS calls in CI.
+- Provide deterministic fixtures for Dynamo (seed in `beforeEach` via mocks) and stable timestamps via `Date.now = jest.fn().mockReturnValue(...)`.
+- Keep integration test runtime under 5s; parallelize with `jest --runInBand` only when mocks require it.
+
+### IAM and Amplify Usage Rules (Tests)
+
+- No live AWS or OpenAI calls in CI; tests must rely on mocks or localstack/Amplify mock.
+- Minimal IAM per Lambda: allow only DynamoDB actions `GetItem`, `PutItem`, `UpdateItem`, `Query` on `arn:aws:dynamodb:<region>:<account>:table/NutriPilot-*` and restrict to needed indexes (e.g., `email-index`). No wildcards on resources or actions.
+- Frontend must use Amplify API/Auth clients for AWS access; do not hand-roll AWS signatures in browser code.
+
+### Error Handling in Async Code
+
+- All async functions that touch I/O (AWS SDK, fetch, Amplify Auth, OpenAI) must wrap the call in try-catch and rethrow normalized errors.
+- Tests must assert both success and error branches using `rejects` or by inspecting returned error DTOs.
+```javascript
+export async function saveMealWithAI(input) {
+  try {
+    const macros = await analyzeMeal(input.description);
+    return await persistMeal({ ...input, macros });
+  } catch (error) {
+    const normalized = normalizeError(error);
+    logger.error('saveMeal failed', { error: normalized });
+    throw normalized;
+  }
+}
+
+test('propagates normalized error', async () => {
+  analyzeMeal.mockRejectedValue(new Error('OpenAI down'));
+  await expect(saveMealWithAI({ description: 'eggs' })).rejects.toThrow('OpenAI down');
+});
+```
 ```
 
 ---

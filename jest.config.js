@@ -1,6 +1,17 @@
 module.exports = {
   testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1'
+  },
+  transform: {
+    '^.+\\.[jt]sx?$': 'babel-jest'
+  },
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/amplify/', '<rootDir>/amplify/#current-cloud-backend/'],
+  modulePathIgnorePatterns: ['<rootDir>/amplify/#current-cloud-backend/'],
+  passWithNoTests: false,
   coverageThreshold: {
+    // Thresholds align with constitution.md 80% coverage minimums.
     global: {
       branches: 80,
       functions: 80,
@@ -10,6 +21,10 @@ module.exports = {
   },
   collectCoverageFrom: [
     'src/**/*.js',
-    '!src/**/*.test.js'
+    'src/**/*.jsx',
+    '!src/**/*.test.js',
+    '!src/aws-exports.js',
+    '!src/index.js',
+    '!src/index.jsx'
   ]
 };

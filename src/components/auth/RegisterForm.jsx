@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { confirmSignUp, signIn, signUp } from 'aws-amplify/auth';
+import AuthShell from './AuthShell';
 
 const INVALID_EMAIL_MESSAGE = 'Please enter valid email address.';
 const WEAK_PASSWORD_MESSAGE = 'Password must be 8+ chars with uppercase, lowercase, number.';
@@ -56,25 +57,41 @@ function RegisterFormFields({
   onSubmit,
 }) {
   return (
-    <form onSubmit={onSubmit} noValidate>
-      {errorMessage ? <div role="alert">{errorMessage}</div> : null}
-      <label htmlFor="register-email">Email</label>
-      <input
-        id="register-email"
-        type="email"
-        value={email}
-        onChange={onEmailChange}
-        autoComplete="email"
-      />
-      <label htmlFor="register-password">Password</label>
-      <input
-        id="register-password"
-        type="password"
-        value={password}
-        onChange={onPasswordChange}
-        autoComplete="new-password"
-      />
-      <button type="submit" disabled={isSubmitting}>
+    <form className="auth-form" onSubmit={onSubmit} noValidate>
+      {errorMessage ? (
+        <div role="alert" aria-live="polite" className="auth-alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="register-email">
+          Email
+        </label>
+        <input
+          id="register-email"
+          className="auth-input"
+          type="email"
+          value={email}
+          onChange={onEmailChange}
+          autoComplete="email"
+          placeholder="you@domain.com"
+        />
+      </div>
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="register-password">
+          Password
+        </label>
+        <input
+          id="register-password"
+          className="auth-input"
+          type="password"
+          value={password}
+          onChange={onPasswordChange}
+          autoComplete="new-password"
+          placeholder="Create a strong password"
+        />
+      </div>
+      <button className="auth-button" type="submit" disabled={isSubmitting}>
         Sign Up
       </button>
     </form>
@@ -83,17 +100,27 @@ function RegisterFormFields({
 
 function ConfirmationFields({ code, errorMessage, isSubmitting, onCodeChange, onSubmit }) {
   return (
-    <form onSubmit={onSubmit} noValidate>
-      {errorMessage ? <div role="alert">{errorMessage}</div> : null}
-      <label htmlFor="confirm-code">Confirmation Code</label>
-      <input
-        id="confirm-code"
-        type="text"
-        value={code}
-        onChange={onCodeChange}
-        autoComplete="one-time-code"
-      />
-      <button type="submit" disabled={isSubmitting}>
+    <form className="auth-form" onSubmit={onSubmit} noValidate>
+      {errorMessage ? (
+        <div role="alert" aria-live="polite" className="auth-alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="confirm-code">
+          Confirmation Code
+        </label>
+        <input
+          id="confirm-code"
+          className="auth-input"
+          type="text"
+          value={code}
+          onChange={onCodeChange}
+          autoComplete="one-time-code"
+          placeholder="6-digit code"
+        />
+      </div>
+      <button className="auth-button" type="submit" disabled={isSubmitting}>
         Confirm
       </button>
     </form>
@@ -240,27 +267,46 @@ export default function RegisterForm() {
     setValidationError,
   });
 
-  if (step === 'confirm') {
-    return (
-      <ConfirmationFields
-        code={code}
-        errorMessage={errorMessage}
-        isSubmitting={isSubmitting}
-        onCodeChange={handlers.handleCodeChange}
-        onSubmit={handlers.handleConfirm}
-      />
-    );
-  }
+  const isConfirmStep = step === 'confirm';
 
   return (
-    <RegisterFormFields
-      email={email}
-      password={password}
-      errorMessage={errorMessage}
-      isSubmitting={isSubmitting}
-      onEmailChange={handlers.handleEmailChange}
-      onPasswordChange={handlers.handlePasswordChange}
-      onSubmit={handlers.handleRegister}
-    />
+    <AuthShell
+      title={isConfirmStep ? 'Confirm your email' : 'Create your account'}
+      subtitle={
+        isConfirmStep
+          ? 'Enter the 6-digit code we sent to your inbox.'
+          : 'Start tracking macros with calm, minimal guidance.'
+      }
+      footer={
+        isConfirmStep ? null : (
+          <p className="auth-meta">
+            Already have an account?{' '}
+            <a className="auth-link" href="/login">
+              Sign in
+            </a>
+          </p>
+        )
+      }
+    >
+      {isConfirmStep ? (
+        <ConfirmationFields
+          code={code}
+          errorMessage={errorMessage}
+          isSubmitting={isSubmitting}
+          onCodeChange={handlers.handleCodeChange}
+          onSubmit={handlers.handleConfirm}
+        />
+      ) : (
+        <RegisterFormFields
+          email={email}
+          password={password}
+          errorMessage={errorMessage}
+          isSubmitting={isSubmitting}
+          onEmailChange={handlers.handleEmailChange}
+          onPasswordChange={handlers.handlePasswordChange}
+          onSubmit={handlers.handleRegister}
+        />
+      )}
+    </AuthShell>
   );
 }

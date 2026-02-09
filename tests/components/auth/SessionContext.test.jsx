@@ -89,6 +89,66 @@ describe('SessionContext', () => {
     });
   });
 
+  test('treats error code as unauthenticated when name is missing', async () => {
+    // Arrange
+    const error = new Error('Missing user');
+    error.name = '';
+    error.code = 'UserNotFoundException';
+    getCurrentUser.mockRejectedValueOnce(error);
+
+    // Act
+    render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('anon');
+      expect(screen.getByTestId('email').textContent).toBe('none');
+    });
+  });
+
+  test('treats explicit unauthenticated message as unauthenticated when name is missing', async () => {
+    // Arrange
+    const error = new Error('The user is not authenticated');
+    error.name = '';
+    getCurrentUser.mockRejectedValueOnce(error);
+
+    // Act
+    render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('anon');
+      expect(screen.getByTestId('email').textContent).toBe('none');
+    });
+  });
+
+  test('treats "needs to be authenticated" message as unauthenticated', async () => {
+    // Arrange
+    const error = new Error('User needs to be authenticated to access this resource');
+    getCurrentUser.mockRejectedValueOnce(error);
+
+    // Act
+    render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('anon');
+      expect(screen.getByTestId('email').textContent).toBe('none');
+    });
+  });
+
   test('moves to authenticated state after sign-in Hub event', async () => {
     // Arrange
     const user = { email: 'session@example.com' };
@@ -213,6 +273,29 @@ describe('SessionContext', () => {
       expect(screen.getByTestId('auth').textContent).toBe('auth');
       expect(screen.getByTestId('email').textContent).toBe(user.email);
     });
+  });
+
+  test('removes Hub listener on unmount', async () => {
+    // Arrange
+    const removeListener = jest.fn();
+    Hub.listen.mockReturnValueOnce(removeListener);
+    getCurrentUser.mockRejectedValueOnce(createUnauthenticatedError());
+
+    // Act
+    const { unmount } = render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    await waitFor(() => {
+      expect(Hub.listen).toHaveBeenCalledWith('auth', expect.any(Function));
+    });
+
+    unmount();
+
+    // Assert
+    expect(removeListener).toHaveBeenCalled();
   });
 
   test('throws when useSession is used outside provider', () => {

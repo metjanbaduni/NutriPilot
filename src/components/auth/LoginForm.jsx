@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { signIn } from 'aws-amplify/auth';
+import AuthShell from './AuthShell';
 
 const INVALID_EMAIL_MESSAGE = 'Please enter valid email address.';
 const WEAK_PASSWORD_MESSAGE = 'Password must be 8+ chars with uppercase, lowercase, number.';
@@ -40,25 +41,41 @@ function LoginFormFields({
   onSubmit,
 }) {
   return (
-    <form onSubmit={onSubmit} noValidate>
-      {errorMessage ? <div role="alert">{errorMessage}</div> : null}
-      <label htmlFor="login-email">Email</label>
-      <input
-        id="login-email"
-        type="email"
-        value={email}
-        onChange={onEmailChange}
-        autoComplete="email"
-      />
-      <label htmlFor="login-password">Password</label>
-      <input
-        id="login-password"
-        type="password"
-        value={password}
-        onChange={onPasswordChange}
-        autoComplete="current-password"
-      />
-      <button type="submit" disabled={isSubmitting}>
+    <form className="auth-form" onSubmit={onSubmit} noValidate>
+      {errorMessage ? (
+        <div role="alert" aria-live="polite" className="auth-alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="login-email">
+          Email
+        </label>
+        <input
+          id="login-email"
+          className="auth-input"
+          type="email"
+          value={email}
+          onChange={onEmailChange}
+          autoComplete="email"
+          placeholder="you@domain.com"
+        />
+      </div>
+      <div className="auth-field">
+        <label className="auth-label" htmlFor="login-password">
+          Password
+        </label>
+        <input
+          id="login-password"
+          className="auth-input"
+          type="password"
+          value={password}
+          onChange={onPasswordChange}
+          autoComplete="current-password"
+          placeholder="Password"
+        />
+      </div>
+      <button className="auth-button" type="submit" disabled={isSubmitting}>
         Sign In
       </button>
     </form>
@@ -112,14 +129,27 @@ export default function LoginForm() {
   };
 
   return (
-    <LoginFormFields
-      email={email}
-      password={password}
-      errorMessage={validationError || authError}
-      isSubmitting={isSubmitting}
-      onEmailChange={handleFieldChange(setEmail)}
-      onPasswordChange={handleFieldChange(setPassword)}
-      onSubmit={handleSubmit}
-    />
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to keep your macro targets on track."
+      footer={
+        <p className="auth-meta">
+          New to NutriPilot?{' '}
+          <a className="auth-link" href="/signup">
+            Create an account
+          </a>
+        </p>
+      }
+    >
+      <LoginFormFields
+        email={email}
+        password={password}
+        errorMessage={validationError || authError}
+        isSubmitting={isSubmitting}
+        onEmailChange={handleFieldChange(setEmail)}
+        onPasswordChange={handleFieldChange(setPassword)}
+        onSubmit={handleSubmit}
+      />
+    </AuthShell>
   );
 }

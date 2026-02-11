@@ -59,5 +59,5 @@ Case E: Confirmation failure
 - Expected: Dashboard placeholder renders.
 
 ### 6) Sign out
-- Action: Trigger sign-out in the authenticated shell (when available in UI).
+- Action: Click the "Sign Out" button in the authenticated shell.
 - Expected: Redirect to `/login`, and `/dashboard` is protected again.

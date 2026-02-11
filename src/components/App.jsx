@@ -41,6 +41,17 @@ function AuthRedirect({ children }) {
   return children;
 }
 
+function AuthenticatedShell({ children, signOut }) {
+  return (
+    <div>
+      <button type="button" onClick={signOut}>
+        Sign Out
+      </button>
+      {children}
+    </div>
+  );
+}
+
 /**
  * App route skeleton with placeholder views and modal host.
  * @returns {JSX.Element} App routes and modal host container.
@@ -69,7 +80,11 @@ export default function App() {
           path={ROUTES.dashboard}
           element={
             <AuthGate>
-              <DashboardPlaceholder />
+              {({ signOut }) => (
+                <AuthenticatedShell signOut={signOut}>
+                  <DashboardPlaceholder />
+                </AuthenticatedShell>
+              )}
             </AuthGate>
           }
         />
@@ -77,7 +92,11 @@ export default function App() {
           path={ROUTES.settings}
           element={
             <AuthGate>
-              <SettingsPlaceholder />
+              {({ signOut }) => (
+                <AuthenticatedShell signOut={signOut}>
+                  <SettingsPlaceholder />
+                </AuthenticatedShell>
+              )}
             </AuthGate>
           }
         />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { confirmSignUp, signIn, signUp } from 'aws-amplify/auth';
 import AuthShell from './AuthShell';
 
@@ -8,6 +9,7 @@ const EMAIL_EXISTS_MESSAGE = 'Email already registered. Please sign in.';
 const CONFIRMATION_ERROR_MESSAGE = 'Unable to confirm account. Please try again.';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EXISTING_ACCOUNT_CODES = new Set(['UsernameExistsException']);
+const INCOMPLETE_SIGNIN_MESSAGE = 'Sign-in requires an additional step. Please try logging in.';
 
 /**
  * Validates that the email string is in a basic RFC-compliant format.
@@ -45,6 +47,10 @@ function getRegistrationErrorMessage(error) {
     return EMAIL_EXISTS_MESSAGE;
   }
   return error?.message || EMAIL_EXISTS_MESSAGE;
+}
+
+function needsAdditionalSignInStep(result) {
+  return result?.isSignedIn === false;
 }
 
 function RegisterFormFields({
@@ -181,6 +187,7 @@ function createRegisterHandler({
 function createConfirmHandler({
   code,
   email,
+  onAuthenticated,
   password,
   setAuthError,
   setIsSubmitting,
@@ -195,7 +202,14 @@ function createConfirmHandler({
       const trimmedEmail = email.trim();
       const trimmedCode = code.trim();
       await confirmSignUp({ username: trimmedEmail, confirmationCode: trimmedCode });
-      await signIn({ username: trimmedEmail, password });
+      const signInResult = await signIn({ username: trimmedEmail, password });
+      if (needsAdditionalSignInStep(signInResult)) {
+        setAuthError(INCOMPLETE_SIGNIN_MESSAGE);
+        return;
+      }
+      if (typeof onAuthenticated === 'function') {
+        onAuthenticated();
+      }
     } catch {
       setAuthError(CONFIRMATION_ERROR_MESSAGE);
     } finally {
@@ -207,6 +221,7 @@ function createConfirmHandler({
 function createRegisterHandlers({
   code,
   email,
+  onAuthenticated,
   password,
   setAuthError,
   setCode,
@@ -233,6 +248,7 @@ function createRegisterHandlers({
     handleConfirm: createConfirmHandler({
       code,
       email,
+      onAuthenticated,
       password,
       setAuthError,
       setIsSubmitting,
@@ -246,6 +262,7 @@ function createRegisterHandlers({
  * @returns {JSX.Element}
  */
 export default function RegisterForm() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -257,6 +274,7 @@ export default function RegisterForm() {
   const handlers = createRegisterHandlers({
     code,
     email,
+    onAuthenticated: () => navigate('/dashboard', { replace: true }),
     password,
     setAuthError,
     setCode,

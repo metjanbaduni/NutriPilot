@@ -58,7 +58,8 @@ body {
 @layer components {
   .auth-shell {
     @apply relative min-h-screen overflow-hidden;
-    background: radial-gradient(circle at top left, rgba(127, 240, 204, 0.12), transparent 55%),
+    background:
+      radial-gradient(circle at top left, rgba(127, 240, 204, 0.12), transparent 55%),
       var(--auth-bg);
   }
 

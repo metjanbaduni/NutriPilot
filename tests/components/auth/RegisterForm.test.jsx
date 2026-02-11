@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { confirmSignUp, signIn, signUp } from 'aws-amplify/auth';
+import { MemoryRouter } from 'react-router-dom';
 import RegisterForm from '../../../src/components/auth/RegisterForm';
 
 const INVALID_EMAIL_MESSAGE = 'Please enter valid email address.';
@@ -14,6 +15,19 @@ function fillRegistrationForm({ email, password }) {
 }
 
 describe('RegisterForm', () => {
+  const ROUTER_FUTURE_FLAGS = {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  };
+
+  function renderRegisterForm() {
+    return render(
+      <MemoryRouter future={ROUTER_FUTURE_FLAGS}>
+        <RegisterForm />
+      </MemoryRouter>
+    );
+  }
+
   beforeEach(() => {
     signUp.mockReset();
     confirmSignUp.mockReset();
@@ -22,7 +36,7 @@ describe('RegisterForm', () => {
 
   test('shows validation error for invalid email', async () => {
     // Arrange
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'invalid-email', password: 'StrongPass1' });
@@ -35,7 +49,7 @@ describe('RegisterForm', () => {
 
   test('shows policy error for weak password', async () => {
     // Arrange
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'weakpass' });
@@ -48,7 +62,7 @@ describe('RegisterForm', () => {
 
   test('shows policy error when password is missing uppercase', async () => {
     // Arrange
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'lowercase1' });
@@ -60,7 +74,7 @@ describe('RegisterForm', () => {
 
   test('shows policy error when password is missing lowercase', async () => {
     // Arrange
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'UPPERCASE1' });
@@ -72,7 +86,7 @@ describe('RegisterForm', () => {
 
   test('shows policy error when password is missing number', async () => {
     // Arrange
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'NoNumber' });
@@ -88,7 +102,7 @@ describe('RegisterForm', () => {
     error.code = 'UsernameExistsException';
     signUp.mockRejectedValueOnce(error);
 
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'StrongPass1' });
@@ -102,7 +116,7 @@ describe('RegisterForm', () => {
     // Arrange
     signUp.mockRejectedValueOnce(new Error('Registration failed'));
 
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'StrongPass1' });
@@ -118,7 +132,7 @@ describe('RegisterForm', () => {
     confirmSignUp.mockResolvedValueOnce({});
     signIn.mockResolvedValueOnce({});
 
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'StrongPass1' });
@@ -146,7 +160,7 @@ describe('RegisterForm', () => {
     signUp.mockResolvedValueOnce({});
     confirmSignUp.mockRejectedValueOnce(new Error('bad code'));
 
-    render(<RegisterForm />);
+    renderRegisterForm();
 
     // Act
     fillRegistrationForm({ email: 'user@example.com', password: 'StrongPass1' });

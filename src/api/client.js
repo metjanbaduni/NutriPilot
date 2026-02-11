@@ -1,4 +1,5 @@
-import { API, Auth } from 'aws-amplify';
+import { API } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const API_NAME = 'nutripilotapi';
 const AUTH_HEADER_NAME = 'Authorization';
@@ -19,16 +20,34 @@ class ApiClientError extends Error {
   }
 }
 
-function normalizeError(error) {
+function getStatusCode(error) {
   const response = error?.response;
-  const statusCode = response?.status ?? error?.statusCode ?? UNKNOWN_STATUS_CODE;
-  const responseMessage = response?.data?.message;
-  const message = isNonEmptyString(responseMessage)
-    ? responseMessage
-    : error?.message || DEFAULT_ERROR_MESSAGE;
-  const details = response?.data ?? error;
+  if (response?.status != null) {
+    return response.status;
+  }
+  if (error?.statusCode != null) {
+    return error.statusCode;
+  }
+  return UNKNOWN_STATUS_CODE;
+}
 
-  return new ApiClientError(message, { statusCode, details });
+function getErrorMessage(error) {
+  const responseMessage = error?.response?.data?.message;
+  if (isNonEmptyString(responseMessage)) {
+    return responseMessage;
+  }
+  return error?.message || DEFAULT_ERROR_MESSAGE;
+}
+
+function getErrorDetails(error) {
+  return error?.response?.data ?? error;
+}
+
+function normalizeError(error) {
+  return new ApiClientError(getErrorMessage(error), {
+    statusCode: getStatusCode(error),
+    details: getErrorDetails(error),
+  });
 }
 
 function isNonEmptyString(value) {
@@ -48,13 +67,13 @@ function normalizeHeaders(headers) {
 }
 
 async function getAuthToken() {
-  if (typeof Auth.currentSession !== 'function') {
+  if (typeof fetchAuthSession !== 'function') {
     throw new Error(MISSING_SESSION_MESSAGE);
   }
 
-  const session = await Auth.currentSession();
-  const idToken = session?.getIdToken?.();
-  const token = idToken?.getJwtToken?.();
+  const session = await fetchAuthSession();
+  const idToken = session?.tokens?.idToken;
+  const token = typeof idToken?.toString === 'function' ? idToken.toString() : idToken?.jwtToken;
 
   if (!token) {
     throw new Error(MISSING_TOKEN_MESSAGE);

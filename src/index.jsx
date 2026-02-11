@@ -3,21 +3,26 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Amplify } from 'aws-amplify';
 import App from './components/App';
-import { SessionProvider } from './context/SessionContext';
 import awsconfig from './aws-exports';
 import './index.css';
 
-Amplify.configure(awsconfig);
+if (!awsconfig) {
+  throw new Error('Amplify configuration is missing.');
+}
 
 const rootElement = document.getElementById('root');
-const root = createRoot(rootElement);
+if (!rootElement) {
+  throw new Error('Root element "#root" not found.');
+}
 
+// Amplify must be configured before any Auth or API usage.
+Amplify.configure(awsconfig);
+
+const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <SessionProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </SessionProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );

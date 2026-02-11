@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Auth, Hub } from 'aws-amplify';
+import { getCurrentUser } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
 
 const SessionContext = createContext(null);
 
@@ -19,10 +20,13 @@ const UNAUTHENTICATED_ERROR_NAMES = new Set([
   'NotAuthorizedException',
   'UserNotFoundException',
   'NotAuthenticatedException',
+  'UserUnauthenticatedException',
+  'UserUnAuthenticatedException',
 ]);
 const NOT_AUTHENTICATED_MESSAGE = 'The user is not authenticated';
 const NO_CURRENT_USER_MESSAGE = 'No current user';
 const NOT_AUTHENTICATED_SUBSTRING = 'not authenticated';
+const NEEDS_AUTHENTICATED_SUBSTRING = 'needs to be authenticated';
 
 const INITIAL_SESSION_STATE = {
   isLoading: true,
@@ -46,12 +50,16 @@ function isUnauthenticatedError(error) {
     return true;
   }
 
-  return message.toLowerCase().includes(NOT_AUTHENTICATED_SUBSTRING);
+  const normalized = message.toLowerCase();
+  if (normalized.includes(NOT_AUTHENTICATED_SUBSTRING)) {
+    return true;
+  }
+  return normalized.includes(NEEDS_AUTHENTICATED_SUBSTRING);
 }
 
 async function fetchSessionUser() {
   try {
-    const user = await Auth.currentAuthenticatedUser();
+    const user = await getCurrentUser();
     return { isAuthenticated: true, user };
   } catch (error) {
     if (isUnauthenticatedError(error)) {
@@ -110,11 +118,13 @@ export function SessionProvider({ children }) {
     };
 
     refreshSession(setSessionSafe, setFatalErrorSafe);
-    Hub.listen(AUTH_CHANNEL, handleAuthEvent);
+    const removeListener = Hub.listen(AUTH_CHANNEL, handleAuthEvent);
 
     return () => {
       isMounted = false;
-      Hub.remove(AUTH_CHANNEL, handleAuthEvent);
+      if (typeof removeListener === 'function') {
+        removeListener();
+      }
     };
   }, []);
 

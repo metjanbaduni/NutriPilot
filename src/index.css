@@ -219,4 +219,91 @@ body {
   .auth-delay-2 {
     animation-delay: 240ms;
   }
+
+  .profile-shell {
+    @apply mx-auto w-full max-w-4xl px-6 py-12;
+  }
+
+  .profile-card {
+    @apply rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/40 backdrop-blur-lg;
+  }
+
+  .profile-header {
+    @apply space-y-2;
+  }
+
+  .profile-title {
+    @apply text-2xl font-semibold text-slate-100;
+  }
+
+  .profile-subtitle {
+    @apply text-sm text-slate-400;
+  }
+
+  .profile-form {
+    @apply mt-6 space-y-5;
+  }
+
+  .profile-grid {
+    @apply grid gap-4 md:grid-cols-3;
+  }
+
+  .profile-actions {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center;
+  }
+
+  .profile-button {
+    @apply auth-button sm:w-auto;
+  }
+
+  .profile-ghost-button {
+    @apply rounded-2xl border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 transition;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .profile-ghost-button:hover {
+    border-color: rgba(127, 240, 204, 0.6);
+    color: #e2fbee;
+  }
+
+  .profile-alert {
+    @apply mt-4 rounded-2xl border px-4 py-3 text-sm;
+  }
+
+  .profile-alert--success {
+    @apply border-emerald-400/30 bg-emerald-500/10 text-emerald-100;
+  }
+
+  .profile-alert--error {
+    @apply border-rose-400/30 bg-rose-500/10 text-rose-100;
+  }
+
+  .profile-state {
+    @apply mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300;
+  }
+
+  .profile-state-title {
+    @apply text-sm font-semibold text-slate-100;
+  }
+
+  .profile-state-body {
+    @apply mt-1 text-slate-400;
+  }
+
+  .profile-targets {
+    @apply mt-6 rounded-2xl border border-white/10 bg-white/5 p-4;
+  }
+
+  .profile-targets-title {
+    @apply text-sm font-semibold text-slate-100;
+  }
+
+  .profile-targets-list {
+    @apply mt-3 grid grid-cols-2 gap-3 text-sm text-slate-200;
+  }
+
+  .profile-targets-label {
+    @apply text-[11px] uppercase text-slate-400;
+    letter-spacing: 0.2em;
+  }
 }

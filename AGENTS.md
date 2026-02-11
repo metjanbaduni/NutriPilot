@@ -24,6 +24,16 @@
 - Use focused `describe` blocks and mock Amplify/network boundaries to keep suites fast.
 - Maintain ≥80% coverage by running `npm run test:coverage`; add regression tests for every bug fix.
 
+## Workflow Quality Standards
+- A task is complete only when its listed tests pass and `npm run lint` + `npm run format:check` pass.
+- Frontend tasks must include loading, empty, error, and populated states unless explicitly out of scope.
+- If a task creates or changes a public hook, API helper, or component, add/update tests in the same task.
+- Do not create follow-up test-only tasks unless explicitly approved by the PO.
+- Match existing theme tokens/classes; if new styles are needed, add them to `src/index.css` or `src/styles/{feature}.css` and document.
+- Each user story must have:
+  - a manual test doc under `docs/manual_testing/`, and
+  - an architecture/troubleshooting doc under `docs/architecture/`.
+
 ## Commit & Pull Request Guidelines
 - Follow the existing conventional format (`feat|fix|chore|docs: short summary`) as seen in `git log`.
 - Keep commits scoped to one change and include test updates or rationale.

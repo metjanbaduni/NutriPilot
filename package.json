@@ -18,6 +18,8 @@
     "lint:fix": "eslint \"{src,tests,amplify/backend/function}/**/*.{js,jsx}\" --fix",
     "format": "prettier --write \"{src,tests,public}/**/*.{js,jsx,css,json,md}\"",
     "format:check": "prettier --check \"{src,tests,public}/**/*.{js,jsx,css,json,md}\"",
+    "prompt:task": "node scripts/prompts/generate_task_prompt.js",
+    "prompt:review": "node scripts/prompts/generate_review_prompt.js",
     "verify": "npm run lint && npm run format:check && npm run test:coverage"
   },
   "repository": {

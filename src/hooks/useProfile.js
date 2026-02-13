@@ -74,7 +74,7 @@ export function ProfileProvider({ children }) {
     [profile, targets, isLoading, error, refetchProfile]
   );
 
-  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
+  return React.createElement(ProfileContext.Provider, { value }, children);
 }
 
 /**

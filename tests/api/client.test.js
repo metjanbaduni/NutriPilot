@@ -1,4 +1,4 @@
-const { API } = require('aws-amplify');
+const { get: amplifyGet, post: amplifyPost } = require('aws-amplify/api');
 const { fetchAuthSession } = require('aws-amplify/auth');
 const { get, post } = require('../../src/api/client');
 
@@ -19,6 +19,16 @@ describe('api client', () => {
     jest.clearAllMocks();
     fetchAuthSession.mockResolvedValue(sessionStub);
   });
+
+  function createRestResponse(payload) {
+    return {
+      response: Promise.resolve({
+        body: {
+          json: () => Promise.resolve(payload),
+        },
+      }),
+    };
+  }
 
   test('get throws normalized error when path is empty', async () => {
     // Arrange
@@ -68,7 +78,7 @@ describe('api client', () => {
   test('get returns response data with signed headers', async () => {
     // Arrange
     const traceId = 'trace-123';
-    API.get.mockResolvedValue({ ok: true });
+    amplifyGet.mockReturnValue(createRestResponse({ ok: true }));
 
     // Act
     const result = await get('/profile', {
@@ -78,17 +88,23 @@ describe('api client', () => {
 
     // Assert
     expect(fetchAuthSession).toHaveBeenCalled();
-    expect(API.get).toHaveBeenCalledWith(API_NAME, '/profile', {
-      headers: { [AUTH_HEADER_NAME]: SESSION_TOKEN, 'X-Trace-Id': traceId },
-      queryStringParameters: { include: 'targets' },
+    expect(amplifyGet).toHaveBeenCalledWith({
+      apiName: API_NAME,
+      path: '/profile',
+      options: {
+        headers: { [AUTH_HEADER_NAME]: SESSION_TOKEN, 'X-Trace-Id': traceId },
+        queryStringParameters: { include: 'targets' },
+      },
     });
     expect(result).toEqual({ ok: true });
   });
 
   test('get throws normalized error with status and message', async () => {
     // Arrange
-    API.get.mockRejectedValue({
-      response: { status: 400, data: { message: 'boom' } },
+    amplifyGet.mockImplementation(() => {
+      throw {
+        response: { status: 400, data: { message: 'boom' } },
+      };
     });
 
     // Act
@@ -104,7 +120,9 @@ describe('api client', () => {
 
   test('get throws default error when message is missing', async () => {
     // Arrange
-    API.get.mockRejectedValue({});
+    amplifyGet.mockImplementation(() => {
+      throw {};
+    });
 
     // Act
     const action = get('/profile');
@@ -119,15 +137,19 @@ describe('api client', () => {
 
   test('post returns response data', async () => {
     // Arrange
-    API.post.mockResolvedValue({ saved: true });
+    amplifyPost.mockReturnValue(createRestResponse({ saved: true }));
 
     // Act
     const result = await post('/profile', { body: { name: 'Alex' } });
 
     // Assert
-    expect(API.post).toHaveBeenCalledWith(API_NAME, '/profile', {
-      body: { name: 'Alex' },
-      headers: { [AUTH_HEADER_NAME]: SESSION_TOKEN },
+    expect(amplifyPost).toHaveBeenCalledWith({
+      apiName: API_NAME,
+      path: '/profile',
+      options: {
+        body: { name: 'Alex' },
+        headers: { [AUTH_HEADER_NAME]: SESSION_TOKEN },
+      },
     });
     expect(result).toEqual({ saved: true });
   });

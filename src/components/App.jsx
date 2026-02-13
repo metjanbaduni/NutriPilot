@@ -1,8 +1,9 @@
 import React from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import AuthGate from './auth/AuthGate';
 import LoginForm from './auth/LoginForm';
 import RegisterForm from './auth/RegisterForm';
+import ProfileForm from './profile/ProfileForm';
 import { SessionProvider, useSession } from '../context/SessionContext';
 
 const ROUTES = {
@@ -14,17 +15,23 @@ const ROUTES = {
 
 const PLACEHOLDER_LABELS = {
   dashboard: 'Dashboard',
-  settings: 'Settings',
 };
 
 const MODAL_HOST_ID = 'modal-host';
 
 function DashboardPlaceholder() {
-  return <div>{PLACEHOLDER_LABELS.dashboard}</div>;
+  return (
+    <div className="space-y-3">
+      <div>{PLACEHOLDER_LABELS.dashboard}</div>
+      <Link className="auth-link" to={ROUTES.settings}>
+        Profile Settings
+      </Link>
+    </div>
+  );
 }
 
 function SettingsPlaceholder() {
-  return <div>{PLACEHOLDER_LABELS.settings}</div>;
+  return <ProfileForm />;
 }
 
 function AuthRedirect({ children }) {

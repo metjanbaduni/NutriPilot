@@ -11,6 +11,7 @@
 - `npm run dev` serves `public/` with `http-server` on port 8080 for local iteration.
 - `npm test`, `npm run test:watch`, and `npm run test:coverage` execute Jest; ensure the 80% global thresholds stay green.
 - `npm run lint` / `npm run lint:fix` enforce ESLint; `npm run format` / `npm run format:check` apply Prettier’s 2-space style.
+- Prompt helpers: `npm run prompt:task -- T0xx` and `npm run prompt:review -- T0xx` (see `docs/ai-prompts/README.md`).
 - `./verify-setup.sh` confirms Node, npm, and Amplify prerequisites on new machines.
 
 ## Coding Style & Naming Conventions

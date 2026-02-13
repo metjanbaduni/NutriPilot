@@ -242,6 +242,39 @@ describe('SessionContext', () => {
     });
   });
 
+  test('moves to unauthenticated state after signedOut Hub event', async () => {
+    // Arrange
+    const user = { email: 'signedin@example.com' };
+    getCurrentUser.mockResolvedValueOnce(user).mockRejectedValueOnce(createUnauthenticatedError());
+
+    // Act
+    render(
+      <SessionProvider>
+        <SessionStateReader />
+      </SessionProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('auth');
+    });
+
+    await waitFor(() => {
+      expect(Hub.listen).toHaveBeenCalledWith('auth', expect.any(Function));
+    });
+
+    const authListener = Hub.listen.mock.calls[0][1];
+
+    act(() => {
+      authListener({ payload: { event: 'signedOut' } });
+    });
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByTestId('auth').textContent).toBe('anon');
+      expect(screen.getByTestId('email').textContent).toBe('none');
+    });
+  });
+
   test('refreshes session after token refresh Hub event', async () => {
     // Arrange
     const user = { email: 'refresh@example.com' };

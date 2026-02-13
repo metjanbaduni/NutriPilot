@@ -1,4 +1,4 @@
-import { API } from 'aws-amplify';
+import { get as amplifyGet, post as amplifyPost } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 const API_NAME = 'nutripilotapi';
@@ -24,6 +24,9 @@ function getStatusCode(error) {
   const response = error?.response;
   if (response?.status != null) {
     return response.status;
+  }
+  if (response?.statusCode != null) {
+    return response.statusCode;
   }
   if (error?.statusCode != null) {
     return error.statusCode;
@@ -97,6 +100,23 @@ function buildRequestInit(init, headers) {
   return { ...baseInit, headers };
 }
 
+async function parseResponseBody(response) {
+  const body = response?.body;
+  if (body && typeof body.json === 'function') {
+    return body.json();
+  }
+  return body ?? response;
+}
+
+async function resolveApiResponse(result) {
+  const resolved = await result;
+  if (resolved?.response) {
+    const response = await resolved.response;
+    return parseResponseBody(response);
+  }
+  return resolved;
+}
+
 /**
  * Sends a signed request using the provided Amplify API method.
  * @param {Function} apiCall - Amplify API method to invoke.
@@ -114,7 +134,12 @@ async function request(apiCall, path, init) {
     const headers = await getSignedHeaders(init?.headers);
     const requestInit = buildRequestInit(init, headers);
 
-    return await apiCall(API_NAME, path, requestInit);
+    const operation = apiCall({
+      apiName: API_NAME,
+      path,
+      options: requestInit,
+    });
+    return await resolveApiResponse(operation);
   } catch (error) {
     throw normalizeError(error);
   }
@@ -128,7 +153,7 @@ async function request(apiCall, path, init) {
  * @throws {Error} When the request fails or auth is unavailable.
  */
 export async function get(path, init) {
-  return request(API.get, path, init);
+  return request(amplifyGet, path, init);
 }
 
 /**
@@ -139,5 +164,5 @@ export async function get(path, init) {
  * @throws {Error} When the request fails or auth is unavailable.
  */
 export async function post(path, init) {
-  return request(API.post, path, init);
+  return request(amplifyPost, path, init);
 }

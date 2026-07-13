@@ -609,6 +609,30 @@ The frontmatter's `tools: Read, Grep, Glob, Bash` restricts the subagent to insp
 
 ### Step 3.5 — The /ship skill
 
+> #### One-time push setup (prerequisite — once per machine, before the first /ship)
+>
+> `/ship`'s final step pushes the branch and opens the PR from inside the session. That only works hands-free if `git` and `gh` can authenticate without prompting — and as of 2026-07-13 this machine had neither: the personal SSH key's passphrase was not stored in the Keychain (every push prompted for it), and `gh`'s *active* account was the work one (`metjan-baduni_wcar`), not `metjanbaduni`.
+>
+> **Instruction:**
+> 1. In `~/.ssh/config`, add two lines to the personal host block (leave the work blocks untouched):
+>
+> ```
+> Host github.com-personal
+>   HostName github.com
+>   User git
+>   IdentityFile ~/.ssh/id_ed25519_personal
+>   IdentitiesOnly yes
+>   AddKeysToAgent yes
+>   UseKeychain yes
+> ```
+>
+> 2. Run `ssh-add --apple-use-keychain ~/.ssh/id_ed25519_personal` in your terminal — it asks for the key's passphrase **one last time** and stores it in the macOS Keychain.
+> 3. Run `gh auth switch --user metjanbaduni` so PRs are created by (and on) your personal account. Note this switch is machine-wide: if you use `gh` for work elsewhere, switch back there with `gh auth switch --user metjan-baduni_wcar`.
+>
+> **Reason:** `AddKeysToAgent` loads the key into the ssh-agent on first use; `UseKeychain` reads the passphrase from the macOS Keychain so nothing ever prompts again (including after a reboot). `gh pr create` acts as whichever `gh` account is *active* — with the work account active it fails on (or wrongly authors) PRs in the personal repo, even though the git remote points at the right place.
+>
+> **Verify:** `ssh-add -l` lists the ed25519 key; `ssh -T git@github.com-personal` greets "Hi metjanbaduni!" with **no passphrase prompt**; `gh auth status` shows `metjanbaduni` as the active account. The next `git push` runs silently.
+
 **Instruction:** Create `.claude/skills/ship/SKILL.md`:
 
 ```markdown
@@ -639,7 +663,10 @@ Ship the current work. Follow ALL steps in order. STOP and report if any step fa
 8. On approval: `git add` the relevant files, commit, and push the current feature
    branch (`git push -u origin <branch>`). Then open a pull request with
    `gh pr create --fill` — or, if a PR already exists for this branch, just push
-   (the PR updates automatically).
+   (the PR updates automatically). If the push prompts for a passphrase or fails
+   with "Permission denied (publickey)", or `gh pr create` fails with a permissions
+   error: STOP and tell the user to complete the one-time push setup documented
+   at the top of step 3.5. Do not retry or try to work around authentication.
 9. Report the PR URL and remind the user to check CI (`gh run watch` or the GitHub
    Actions tab).
 ```
@@ -858,6 +885,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 - [ ] 3.3 Install `jq` if needed; create + chmod `.claude/hooks/lint-changed.sh` — 10 min
 - [ ] 3.4 Create `.claude/agents/code-reviewer.md` — 10 min
 - [ ] 3.5 Create `.claude/skills/ship/SKILL.md` — 10 min
+- [ ] 3.5 prerequisite: one-time push setup (SSH key in Keychain + `gh auth switch` to personal) — 5 min
 - [ ] 3.6 Add Playwright MCP; create `.claude/skills/verify-ui/SKILL.md` — 20 min
 - [ ] 3.7 Confirm `.github/workflows/ci.yml` exists (from 0.3) and is green
 - [ ] Dry run: one trivial change through the full ritual (branch → plan → implement → /verify-ui → /ship → CI → merge) — 30 min

@@ -7,12 +7,16 @@ const SessionContext = createContext(null);
 const AUTH_CHANNEL = 'auth';
 const AUTH_EVENTS = {
   SIGN_IN: 'signIn',
+  SIGNED_IN: 'signedIn',
   SIGN_OUT: 'signOut',
+  SIGNED_OUT: 'signedOut',
   TOKEN_REFRESH: 'tokenRefresh',
 };
 const SESSION_EVENTS = new Set([
   AUTH_EVENTS.SIGN_IN,
+  AUTH_EVENTS.SIGNED_IN,
   AUTH_EVENTS.SIGN_OUT,
+  AUTH_EVENTS.SIGNED_OUT,
   AUTH_EVENTS.TOKEN_REFRESH,
 ]);
 

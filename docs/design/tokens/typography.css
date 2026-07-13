@@ -1,0 +1,29 @@
+/* NutriPilot — Typography tokens. Font: Sora (Google Fonts), weights 300-700,
+   as imported in uploads/index.css. Fallback stack copied verbatim. */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Sora', 'SF Pro Display', 'Helvetica Neue', sans-serif;
+
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Type scale — Tailwind sizes actually used in the shipped screens */
+  --text-xs: 12px;   /* eyebrow, uppercase labels */
+  --text-sm: 14px;   /* body copy, inputs, subtitles */
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-2xl: 24px;  /* card titles (auth-card-title, profile-title) */
+  --text-3xl: 30px;  /* auth-hero (mobile) */
+  --text-4xl: 36px;  /* auth-hero (sm+) */
+
+  --leading-tight: 1.25;
+  --leading-relaxed: 1.625;
+
+  --tracking-wide: 0.2em;  /* profile-targets-label, auth-highlight-label */
+  --tracking-widest: 0.3em; /* auth-eyebrow */
+}

@@ -1,0 +1,24 @@
+/* NutriPilot — Shadow, blur & motion tokens extracted from uploads/index.css. */
+
+:root {
+  --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.4);        /* shadow-2xl shadow-black/40 */
+  --shadow-logo: 0 10px 15px -3px rgba(16, 185, 129, 0.1);    /* shadow-lg shadow-emerald-500/10 */
+  --shadow-button: 0 18px 40px -20px rgba(127, 240, 204, 0.5);
+
+  --blur-panel: 16px; /* backdrop-blur-lg */
+  --blur-logo: 8px;
+
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* authFadeUp — used to stagger-in auth intro/card content on load */
+@keyframes authFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* authFloat — slow drifting background orbs behind auth/marketing shells */
+@keyframes authFloat {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(18px, -14px, 0) scale(1.05); }
+}

@@ -17,6 +17,22 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - Completion: Mark the task [x] in this file when done.
 - Decisions: If a required decision is not specified, stop and ask.
 
+## Task Card Template (use for new tasks)
+- [ ] T0xx [P?] [USx] Task name
+  - Files: `<paths>`
+  - UI/theme: Use existing tokens/classes; define loading/empty/error/populated states.
+  - Tests: `<test paths>`
+  - Acceptance: `<clear, verifiable outcomes>`
+  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+
+## User Story Quality Gate (run before moving to next story)
+- [ ] All tasks in the story are marked complete in this file.
+- [ ] `npm test` passes (or specified subset if agreed).
+- [ ] `npm run test:coverage` passes with ≥80% global.
+- [ ] `npm run lint` passes.
+- [ ] `npm run format:check` passes.
+- [ ] Manual test doc for the story exists and is executed.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
@@ -116,21 +132,51 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T019 [P] [US2] Add API wrapper tests covering `API.get('profile')` + `API.post('profile')` success/error branches in `tests/api/profile.test.js`
-- [ ] T020 [P] [US2] Add onboarding form tests for field validation, calculation triggers, and save success banners in `tests/components/profile/ProfileForm.test.jsx`
+- [x] T019 [P] [US2] Add API wrapper tests covering `API.get('profile')` + `API.post('profile')` success/error branches in `tests/api/profile.test.js`
+- [x] T021A [P] [US2] Add profile API helper tests to cover fetch/save success + error normalization (added post-review)
+  - Files: `tests/api/profile.test.js`
+  - Notes: Added to close coverage gap; ensure error wrapping paths are exercised.
+  - Tests: `tests/api/profile.test.js`
+  - Acceptance: Covers fetchProfile + saveProfile success, ApiClientError passthrough, and fallback error.
+- [x] T020 [P] [US2] Add onboarding form tests for field validation, calculation triggers, and save success banners in `tests/components/profile/ProfileForm.test.jsx`
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Implement profile API helper exposing `fetchProfile` + `saveProfile` using the shared client in `src/api/profile.js`
-- [ ] T022 [P] [US2] Implement macro calculation + validation helper per constitution formulas in `src/utils/calculateMacros.js`
+- [x] T021 [US2] Implement profile API helper exposing `fetchProfile` + `saveProfile` using the shared client in `src/api/profile.js`
+- [x] T022 [P] [US2] Implement macro calculation + validation helper per constitution formulas in `src/utils/calculateMacros.js`
   - Files: `src/utils/calculateMacros.js`
   - Notes: Use constitution formulas + validation ranges; export pure functions only.
   - Tests: `tests/utils/calculateMacros.test.js`
   - Acceptance: Deterministic outputs; throws on invalid inputs; no side effects.
-- [ ] T023 [US2] Implement `getProfile` Lambda (Auth check, Dynamo query, DTO) in `amplify/backend/function/getProfile/src/index.js`
-- [ ] T024 [US2] Implement `updateProfile` Lambda (schema validation, macro recalculation, Dynamo writes) in `amplify/backend/function/updateProfile/src/index.js`
-- [ ] T025 [US2] Build reusable `ProfileForm` component for onboarding/settings with Tailwind layout in `src/components/profile/ProfileForm.jsx`
-- [ ] T026 [US2] Create `useProfile` hook/context to hydrate onboarding + settings screens and expose refetch in `src/hooks/useProfile.js`
+- [x] T023 [US2] Implement `getProfile` Lambda (Auth check, Dynamo query, DTO) in `amplify/backend/function/getProfile/src/index.js`
+- [x] T023A [P] [US2] Add getProfile Lambda unit tests (added post-review)
+  - Files: `tests/lambdas/getProfile.test.js`
+  - Notes: Added for backend confidence; mock DynamoDB and verify DTO + auth errors.
+  - Tests: `tests/lambdas/getProfile.test.js`
+  - Acceptance: 401 on missing auth, returns profile + targets on success, handles empty result.
+- [x] T024 [US2] Implement `updateProfile` Lambda (schema validation, macro recalculation, Dynamo writes) in `amplify/backend/function/updateProfile/src/index.js`
+- [x] T024A [P] [US2] Add updateProfile Lambda unit tests (added post-review)
+  - Files: `tests/lambdas/updateProfile.test.js`
+  - Notes: Added for backend confidence; mock DynamoDB + calculateMacros paths.
+  - Tests: `tests/lambdas/updateProfile.test.js`
+  - Acceptance: 400 on invalid input, writes PROFILE + TARGETS on success, returns DTO.
+- [x] T025 [US2] Build reusable `ProfileForm` component for onboarding/settings with Tailwind layout in `src/components/profile/ProfileForm.jsx`
+- [x] T026 [US2] Create `useProfile` hook/context to hydrate onboarding + settings screens and expose refetch in `src/hooks/useProfile.js`
+- [x] T026A [P] [US2] Add `useProfile` hook unit tests (added post-review)
+  - Files: `tests/hooks/useProfile.test.js`
+  - Notes: Added to lock in loading, error, and refetch behavior.
+  - Tests: `tests/hooks/useProfile.test.js`
+  - Acceptance: Verifies initial loading state, success hydration, error handling, and refetch trigger.
+
+- [ ] T046 [US2] Register profile Lambdas + API Gateway routes and deploy
+  - Files: `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`,
+    `amplify/backend/function/getProfile/*`, `amplify/backend/function/updateProfile/*`
+  - Notes: Register getProfile/updateProfile with Amplify; add GET/POST /profile with Cognito
+    authorizer; decide nutripilotFunction's fate (implement as router or remove); amplify push.
+  - Tests: existing `tests/lambdas/*.test.js` still pass; manual smoke per docs/manual_testing/profile-onboarding.md
+  - Acceptance: GET and POST /profile return live 200s with the DTO shape from a signed-in session;
+    settings screen round-trips against real AWS; US2 Independent Test executed and passing.
+  - DoD: `npm run verify`; smoke test evidence noted in the manual test doc.
 
 **Checkpoint**: Users persist accurate macro targets and can revisit/edit details
 
@@ -142,18 +188,40 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 **Independent Test**: After seeding meals, load `/dashboard`, verify skeleton -> populated state, progress bars reflect Dynamo totals, and errors show retry CTA
 
-### Tests for User Story 3 ⚠️
+### Execution Plan for User Story 3 (Self-Contained Tasks)
 
-- [ ] T027 [P] [US3] Add Lambda unit test asserting `getDashboard` aggregates profile/targets/meals correctly in `tests/lambdas/getDashboard.test.js`
-- [ ] T028 [P] [US3] Add dashboard component test covering empty, loading, data, and error banners in `tests/components/dashboard/Dashboard.test.jsx`
+- [ ] T027 [P] [US3] Implement `getDashboard` Lambda + unit tests
+  - Files: `amplify/backend/function/getDashboard/src/index.js`
+  - Notes: Query Dynamo entities and compute summaries per spec.
+  - Tests: `tests/lambdas/getDashboard.test.js`
+  - Acceptance: Aggregates profile/targets/meals correctly; handles empty sets; returns dashboard DTO.
+  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+- [ ] T028 [P] [US3] Implement dashboard API helper + tests
+  - Files: `src/api/dashboard.js`
+  - Notes: Fetch `/api/dashboard`, normalize progress percentages, reuse shared client.
+  - Tests: `tests/api/dashboard.test.js`
+  - Acceptance: Success normalization, ApiClientError passthrough, fallback error message.
+  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+- [ ] T029 [P] [US3] Implement `useDashboard` hook + tests
+  - Files: `src/hooks/useDashboard.js`
+  - Notes: Fetch dashboard data, expose loading/error/data, refetch; auto-refresh after mutations.
+  - Tests: `tests/hooks/useDashboard.test.js`
+  - Acceptance: Loading, success, error, and refetch paths covered.
+  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+- [ ] T030 [P] [US3] Build `DashboardSkeleton` + retry banner components + tests
+  - Files: `src/components/dashboard/DashboardSkeleton.jsx`
+  - Notes: Provide loading/empty/error UI states per spec; match theme.
+  - Tests: `tests/components/dashboard/DashboardSkeleton.test.jsx`
+  - Acceptance: Skeleton, empty, and error retry states render accessibly.
+  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+- [ ] T031 [P] [US3] Build `Dashboard` component + tests
+  - Files: `src/components/dashboard/Dashboard.jsx`
+  - Notes: Summary cards, progress bars, meal list headers, settings CTA; uses `useDashboard`.
+  - Tests: `tests/components/dashboard/Dashboard.test.jsx`
+  - Acceptance: Loading/empty/error/data states; progress values match payload; CTA present.
+  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
 
-### Implementation for User Story 3
-
-- [ ] T029 [US3] Implement dashboard API helper to fetch `/api/dashboard` and normalize progress percentages in `src/api/dashboard.js`
-- [ ] T030 [US3] Implement `getDashboard` Lambda to query Dynamo entities and compute summaries per spec in `amplify/backend/function/getDashboard/src/index.js`
-- [ ] T031 [US3] Build `Dashboard` component with summary cards, progress bars, meal list headers, and settings CTA in `src/components/dashboard/Dashboard.jsx`
-- [ ] T032 [P] [US3] Add `DashboardSkeleton` + retry banner components for loading/error states in `src/components/dashboard/DashboardSkeleton.jsx`
-- [ ] T033 [US3] Implement `useDashboard` hook to fetch dashboard data, auto-refresh after mutations, and expose delete callbacks in `src/hooks/useDashboard.js`
+**Note**: US3 tasks are now self-contained. Prior test-only items (T027/T028) and split items (T032/T033) are folded into the tasks above to avoid follow-up test-only prompts.
 
 **Checkpoint**: Dashboard renders accurate real-time macro progress with resilient UX states
 
@@ -205,8 +273,27 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 **Purpose**: Documentation, automation, and hardening tasks that span all stories
 
 - [ ] T043 [P] Capture new backend, AI, and caching decisions in `docs/decisions/000-planning-phase.md`
-- [ ] T044 Add `verify` npm script chaining `lint`, `test`, and `format:check` plus document it in `package.json`
+- [x] T044 Add `verify` npm script chaining `lint`, `test`, and `format:check` plus document it in `package.json`
 - [ ] T045 Update `README.md` quickstart + deployment sections to mirror `specs/000-planning-phase/quickstart.md`
+
+- [ ] T047 Fix user-facing error messages in auth + profile forms
+  - Files: `src/components/auth/LoginForm.jsx`, `src/components/auth/RegisterForm.jsx`,
+    `src/components/profile/ProfileForm.jsx`
+  - Notes: Map known Cognito error codes (UserNotConfirmedException, UsernameExistsException,
+    NotAuthorizedException) to specific friendly messages; generic fallback otherwise; never render
+    raw error.message (constitution "Error Messages").
+  - Tests: extend LoginForm/RegisterForm/ProfileForm tests with one case per mapped code + fallback
+  - Acceptance: network failure no longer shows "Email already registered"; unconfirmed user is told
+    to confirm; no raw Amplify/backend message reaches the UI.
+  - DoD: `npm run verify`.
+
+- [ ] T048 [P] Enforcement gaps: lint rules + CI
+  - Files: `eslint.config.js`, `.eslintrc.js` (delete), `.github/workflows/ci.yml` (new)
+  - Notes: add max-lines-per-function:50 and max-depth:3 per constitution; CI runs
+    `npm run verify && npm run build` on push/PR.
+  - Tests: N/A (config)
+  - Acceptance: lint fails on a 51-line function; CI visible and green on the PR.
+  - DoD: `npm run verify`.
 
 ---
 

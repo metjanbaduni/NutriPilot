@@ -1,0 +1,48 @@
+/* NutriPilot — Color tokens
+   Extracted from shipped source: uploads/index.css (:root vars + Tailwind
+   utility classes used in App.jsx / LoginForm.jsx / RegisterForm.jsx /
+   ProfileForm.jsx). Values are copied verbatim — not rounded or re-picked. */
+
+:root {
+  /* ---- Base surface & text (dark theme only — the app ships one theme) ---- */
+  --color-bg: #0b0f14;                        /* auth-bg / page background */
+  --color-surface: rgba(255, 255, 255, 0.05); /* card fill: bg-white/5 */
+  --color-surface-strong: rgba(15, 23, 42, 0.6); /* input fill: bg-slate-900/60 */
+  --color-panel: rgba(17, 25, 34, 0.78);      /* auth-panel */
+
+  --color-border: rgba(255, 255, 255, 0.1);   /* border-white/10 (cards, inputs) */
+  --color-border-subtle: rgba(255, 255, 255, 0.08); /* auth-border */
+
+  --color-text-primary: #f1f5f9;   /* slate-100 — headings, values */
+  --color-text-secondary: #e2e8f0; /* slate-200 — labels, targets list */
+  --color-text-muted: #94a3b8;     /* slate-400 — subtitles, meta */
+  --color-text-faint: #64748b;     /* slate-500 — native <input>/<select>
+     placeholder text ONLY (WCAG-exempt). Contrast audit: ~4.0:1 on
+     --color-bg and ~3.6:1 on --color-surface — BELOW the 4.5:1 AA minimum
+     for real body text, so nothing else may use this token. Every screen
+     that was using it for captions/timestamps/labels was moved to
+     --color-text-muted (#94a3b8, ~6.7–7.5:1, passes AA) — see DESIGN.md's
+     "Accessibility" section. */
+
+  /* ---- Brand accent (mint → emerald) ---- */
+  --color-accent: #7ff0cc;         /* auth-accent (mint) */
+  --color-accent-strong: #38e7b1;  /* auth-accent-strong (emerald) */
+  --color-accent-glow: rgba(127, 240, 204, 0.18);
+  --color-accent-text-on: #0f172a; /* text on accent buttons (slate-900) */
+
+  /* ---- Semantic feedback ---- */
+  --color-success-border: rgba(52, 211, 153, 0.3); /* emerald-400/30 */
+  --color-success-bg: rgba(16, 185, 129, 0.1);     /* emerald-500/10 */
+  --color-success-text: #d1fae5;                   /* emerald-100 */
+
+  --color-danger-border: rgba(251, 113, 133, 0.3); /* rose-400/30 */
+  --color-danger-bg: rgba(244, 63, 94, 0.1);       /* rose-500/10 */
+  --color-danger-text: #ffe4e6;                    /* rose-100 */
+  --color-danger-text-strong: #fecdd3;             /* rose-200 — inline field errors */
+
+  /* ---- Macro nutrient colors (fixed mapping — do not remix) ---- */
+  --color-macro-calories: #3b82f6; /* blue */
+  --color-macro-protein: #22c55e;  /* green */
+  --color-macro-carbs: #f59e0b;    /* amber */
+  --color-macro-fat: #ef4444;      /* red */
+}

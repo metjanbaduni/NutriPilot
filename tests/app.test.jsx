@@ -88,6 +88,10 @@ describe('App routing', () => {
     await waitFor(() => {
       expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
     });
+    expect(screen.getByRole('link', { name: /profile settings/i })).toHaveAttribute(
+      'href',
+      '/settings'
+    );
   });
 
   test('redirects authenticated users from /login to dashboard', async () => {
@@ -107,7 +111,7 @@ describe('App routing', () => {
     });
   });
 
-  test('renders settings placeholder for authenticated users', async () => {
+  test('renders profile form for authenticated users on /settings', async () => {
     // Arrange
     getCurrentUser.mockResolvedValue({ email: 'settings@nutripilot.dev' });
 
@@ -120,7 +124,7 @@ describe('App routing', () => {
 
     // Assert
     await waitFor(() => {
-      expect(screen.getByText(/Settings/i)).toBeInTheDocument();
+      expect(screen.getByText(/Current Profile/i)).toBeInTheDocument();
     });
   });
 });

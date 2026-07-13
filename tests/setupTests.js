@@ -12,17 +12,17 @@ const createUnauthenticatedError = () => {
   return error;
 };
 
-// Mock Amplify API to avoid live AWS calls in tests.
+// Mock Amplify core config to avoid real initialization in tests.
 jest.mock('aws-amplify', () => ({
   Amplify: {
     configure: jest.fn(),
   },
-  API: {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    del: jest.fn(),
-  },
+}));
+
+// Mock Amplify REST API module used by the shared client.
+jest.mock('aws-amplify/api', () => ({
+  get: jest.fn(),
+  post: jest.fn(),
 }));
 
 // Mock Amplify Auth module for authentication flows.

@@ -37,6 +37,29 @@ You use **one Claude review prompt** to review that task.
 
 Never free-form a prompt for foundational work.
 
+## Prompt Generation (Recommended)
+
+Use the helper scripts to generate consistent prompts from `tasks.md`:
+- `node scripts/prompts/generate_task_prompt.js T0xx`
+- `node scripts/prompts/generate_review_prompt.js T0xx`
+
+Claude review context:
+- `docs/ai-prompts/claude-review.md`
+
+### Usage Examples
+
+Generate a Codex implementation prompt:
+```
+npm run prompt:task -- T031
+```
+
+Generate a Claude review prompt:
+```
+npm run prompt:review -- T031
+```
+
+Tip: Replace `T031` with the task ID you want to run next.
+
 ---
 
 ## Phase 2 (Foundation) – Locked Scope

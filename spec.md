@@ -431,6 +431,11 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
 
 ## User Interface (React)
 
+## UI Design Reference
+All UI work must use [docs/design/DESIGN.md] for colors, spacing, 
+typography, and component patterns. If a needed style isn't covered, 
+flag it instead of guessing or inventing a new value.
+
 ### Screen: Dashboard
 
 **Route:** `/dashboard`
@@ -608,7 +613,7 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
 - Social features (Phase 3)
 - Weekly analytics (Phase 2)
 - Electrolytes tracking (Phase 2)
-- Dark mode (Phase 2)
+- Light mode (Phase 2) — dark mode only for MVP
 
 ---
 

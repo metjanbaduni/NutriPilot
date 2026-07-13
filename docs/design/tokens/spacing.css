@@ -1,0 +1,40 @@
+/* NutriPilot — Spacing & radius tokens, extracted from Tailwind utilities
+   in uploads/index.css (rounded-3xl / rounded-2xl / p-8 / gap-4 / space-y-5 …). */
+
+:root {
+  --radius-sm: 12px;   /* rounded-xl (rare) */
+  --radius-md: 16px;   /* rounded-2xl — inputs, buttons, small tiles */
+  --radius-lg: 24px;   /* rounded-3xl — cards, shells */
+  --radius-full: 9999px; /* logo badge, pills */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Content widths seen in the shipped shells */
+  --width-card: 448px;   /* auth-card: max-w-md */
+  --width-intro: 576px;  /* auth-intro: max-w-xl */
+  --width-profile: 896px; /* profile-shell: max-w-4xl */
+  --width-container: 1152px; /* auth-container: max-w-6xl */
+
+  /* Breakpoints — match the Tailwind defaults already in use in the source
+     (auth-container switches with "lg:flex-row lg:items-start"; auth-hero
+     scales with "sm:text-4xl"). Since inline-styled Design Components can't
+     use @media, these are read by each screen's resize listener and applied
+     in JS — see the "Responsive behavior" section of DESIGN.md. */
+  --breakpoint-sm: 640px;  /* type scale bump only (auth-hero 30px -> 36px) */
+  --breakpoint-md: 768px;  /* stat/field grids go from 1 col to 2-3 col */
+  --breakpoint-lg: 1024px; /* primary breakpoint: nav bar appears, intro/card go side by side, mobile tracking screens widen into multi-column layouts */
+
+  /* Responsive spacing scale — same tokens, larger step on wide screens */
+  --space-page-mobile: 20px;  /* screen edge padding below lg */
+  --space-page-desktop: 48px; /* screen edge padding at lg+ */
+  --space-card-mobile: 20px;  /* card internal padding below lg */
+  --space-card-desktop: 32px; /* card internal padding at lg+ (matches p-8 in source) */
+}

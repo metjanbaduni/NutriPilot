@@ -1,0 +1,7 @@
+/* NutriPilot design system — global token entry point.
+   Import this single file; it pulls in every token sheet below. */
+
+@import url('./colors.css');
+@import url('./typography.css');
+@import url('./spacing.css');
+@import url('./effects.css');

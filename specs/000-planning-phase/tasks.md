@@ -162,11 +162,21 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
   - Acceptance: 400 on invalid input, writes PROFILE + TARGETS on success, returns DTO.
 - [x] T025 [US2] Build reusable `ProfileForm` component for onboarding/settings with Tailwind layout in `src/components/profile/ProfileForm.jsx`
 - [x] T026 [US2] Create `useProfile` hook/context to hydrate onboarding + settings screens and expose refetch in `src/hooks/useProfile.js`
-- [ ] T026A [P] [US2] Add `useProfile` hook unit tests (added post-review)
+- [x] T026A [P] [US2] Add `useProfile` hook unit tests (added post-review)
   - Files: `tests/hooks/useProfile.test.js`
   - Notes: Added to lock in loading, error, and refetch behavior.
   - Tests: `tests/hooks/useProfile.test.js`
   - Acceptance: Verifies initial loading state, success hydration, error handling, and refetch trigger.
+
+- [ ] T046 [US2] Register profile Lambdas + API Gateway routes and deploy
+  - Files: `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`,
+    `amplify/backend/function/getProfile/*`, `amplify/backend/function/updateProfile/*`
+  - Notes: Register getProfile/updateProfile with Amplify; add GET/POST /profile with Cognito
+    authorizer; decide nutripilotFunction's fate (implement as router or remove); amplify push.
+  - Tests: existing `tests/lambdas/*.test.js` still pass; manual smoke per docs/manual_testing/profile-onboarding.md
+  - Acceptance: GET and POST /profile return live 200s with the DTO shape from a signed-in session;
+    settings screen round-trips against real AWS; US2 Independent Test executed and passing.
+  - DoD: `npm run verify`; smoke test evidence noted in the manual test doc.
 
 **Checkpoint**: Users persist accurate macro targets and can revisit/edit details
 
@@ -263,8 +273,27 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 **Purpose**: Documentation, automation, and hardening tasks that span all stories
 
 - [ ] T043 [P] Capture new backend, AI, and caching decisions in `docs/decisions/000-planning-phase.md`
-- [ ] T044 Add `verify` npm script chaining `lint`, `test`, and `format:check` plus document it in `package.json`
+- [x] T044 Add `verify` npm script chaining `lint`, `test`, and `format:check` plus document it in `package.json`
 - [ ] T045 Update `README.md` quickstart + deployment sections to mirror `specs/000-planning-phase/quickstart.md`
+
+- [ ] T047 Fix user-facing error messages in auth + profile forms
+  - Files: `src/components/auth/LoginForm.jsx`, `src/components/auth/RegisterForm.jsx`,
+    `src/components/profile/ProfileForm.jsx`
+  - Notes: Map known Cognito error codes (UserNotConfirmedException, UsernameExistsException,
+    NotAuthorizedException) to specific friendly messages; generic fallback otherwise; never render
+    raw error.message (constitution "Error Messages").
+  - Tests: extend LoginForm/RegisterForm/ProfileForm tests with one case per mapped code + fallback
+  - Acceptance: network failure no longer shows "Email already registered"; unconfirmed user is told
+    to confirm; no raw Amplify/backend message reaches the UI.
+  - DoD: `npm run verify`.
+
+- [ ] T048 [P] Enforcement gaps: lint rules + CI
+  - Files: `eslint.config.js`, `.eslintrc.js` (delete), `.github/workflows/ci.yml` (new)
+  - Notes: add max-lines-per-function:50 and max-depth:3 per constitution; CI runs
+    `npm run verify && npm run build` on push/PR.
+  - Tests: N/A (config)
+  - Acceptance: lint fails on a 51-line function; CI visible and green on the PR.
+  - DoD: `npm run verify`.
 
 ---
 

@@ -49,6 +49,8 @@ Do this **before** any harness setup or new feature code. (Generating design scr
 
 ### Step 0.1 — Sync tasks.md with reality *(by hand)*
 
+> **Status: ✅ done 2026-07-13.** Checkboxes, T046–T048 cards, and the dark-mode spec fix merged in PR #1; the remaining format fixes (T007 `.jsx`, template DoD, Quality Gate line, stale T032/T033 refs) applied right after. Kept below for reference and as the pattern for future syncs.
+
 **Instruction:** Open `specs/000-planning-phase/tasks.md` and make these edits:
 
 1. Check off two tasks that are already done (verified by the audit — the code exists and passes):
@@ -98,6 +100,8 @@ Do this **before** any harness setup or new feature code. (Generating design scr
 **Verify:** `git diff specs/000-planning-phase/tasks.md` shows exactly these changes and nothing else. `grep -c "T046\|T047\|T048" specs/000-planning-phase/tasks.md` returns at least 3.
 
 ### Step 0.2 — Archive the Codex-era leftovers *(by hand)*
+
+> **Status: ✅ done 2026-07-13** — commit `93b1960`, merged in PR #1. One deviation from the text below, in your favor: `AGENTS.md` was rewritten directly with the **Part 8.1 shared version** (with the pre-T046 "Known state") instead of the short pointer, since the dual-tool setup is planned. So step 3.1 only needs the slim importing `CLAUDE.md`; AGENTS.md is already in its final shape.
 
 **Instruction:** These are the REAL leftover files, confirmed by a full scan of every tracked .md file on 2026-07-13 (v2 told you to archive `00-MASTER-GUIDE.md`, which does not exist; `docs/agentic-workflow-v2.md` is already deleted). In your terminal, from the repo root:
 
@@ -841,8 +845,8 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 ### Checklist (in order; Phase 0 first)
 
-- [ ] 0.1 Sync tasks.md: check T026A/T044, paste T046–T048, format fixes — 15 min, by hand
-- [ ] 0.2 Archive all dead-workflow files (.codex, scripts/prompts, .github/prompts, docs/ai-prompts, docs/architecture, .specify/templates + specs, old workflow doc), prune `prompt:*` scripts, rewrite AGENTS.md — 15 min, by hand
+- [x] 0.1 Sync tasks.md: check T026A/T044, paste T046–T048, format fixes — done 2026-07-13 (PR #1)
+- [x] 0.2 Archive all dead-workflow files (.codex, scripts/prompts, .github/prompts, docs/ai-prompts, docs/architecture, .specify/templates + specs, old workflow doc), prune `prompt:*` scripts, rewrite AGENTS.md — done 2026-07-13 (commit 93b1960, PR #1)
 - [ ] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
 - [ ] 0.4 T046: backend wiring + live smoke test — Claude session (pair exercise for Amplify CLI)
 - [ ] 0.5 T047: error messages — Claude session; open the cleanup PR; merge when CI is green

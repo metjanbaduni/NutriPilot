@@ -23,7 +23,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
   - UI/theme: Use existing tokens/classes; define loading/empty/error/populated states.
   - Tests: `<test paths>`
   - Acceptance: `<clear, verifiable outcomes>`
-  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+  - DoD: `npm run verify` passes.
 
 ## User Story Quality Gate (run before moving to next story)
 - [ ] All tasks in the story are marked complete in this file.
@@ -32,6 +32,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - [ ] `npm run lint` passes.
 - [ ] `npm run format:check` passes.
 - [ ] Manual test doc for the story exists and is executed.
+- [ ] Independent Test executed against the dev environment and passed.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -49,7 +50,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - [x] T003 [P] Define Tailwind theme tokens and content globs aligned with dashboard mocks in `tailwind.config.cjs`
 - [x] T004 [P] Configure PostCSS pipeline (tailwindcss, autoprefixer) in `postcss.config.js`
 - [x] T005 [P] Add Tailwind base directives and macro color variables in `src/index.css`
-- [x] T006 Replace static shell with Vite root markup referencing `/src/index.js` in `public/index.html`
+- [x] T006 Replace static shell with Vite root markup referencing `/src/index.jsx` in `public/index.html`
 
 ---
 
@@ -59,7 +60,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [x] T007 Initialize AWS Amplify and render `<App />` via `createRoot` + `BrowserRouter` in `src/index.js`
+- [x] T007 Initialize AWS Amplify and render `<App />` via `createRoot` + `BrowserRouter` in `src/index.jsx`
 - [x] T008 Build the high-level route skeleton with placeholders for `/login`, `/signup`, `/dashboard`, `/settings`, and modal host in `src/components/App.jsx`
 - [X] T009 Implement `SessionContext` with Amplify `Hub` listeners, Auth token refresh, and `useSession` hook in `src/context/SessionContext.jsx`
 - [x] T010 [P] Add centralized Amplify API client with signed REST helpers and error normalization in `src/api/client.js`
@@ -302,7 +303,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **User Stories (Phases 3–6)** → **Polish**
 - User Story dependencies: US1 (Auth) enables US2 (Profile), US2 enables US3 (Dashboard) and US4 (Meal logging). US3 + US4 share API hooks but remain independently testable once US2 data exists.
 - Backend Lambdas depend on the shared Dynamo client (T011) and macro helper (T022).
-- React hooks/components consume contexts created in T009 + T026 + T033.
+- React hooks/components consume contexts created in T009 + T026.
 
 ## Parallel Execution Opportunities
 
@@ -310,7 +311,7 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 - Foundational helpers (T010–T012) are independent of each other.
 - Within US1, LoginForm (T015) and RegisterForm (T016) can be built simultaneously after tests.
 - US2 Lambdas (T023, T024) can run in parallel after macro helper (T022).
-- US3 UI (T031, T032) and hook (T033) can be done concurrently after API wrapper (T029).
+- US3 UI (T030, T031) and hook (T029) can be done concurrently after API helper (T028).
 - US4 Lambdas (T037–T040) can be staffed in parallel because they touch different handlers/files.
 
 ## Parallel Example: User Story 4

@@ -591,12 +591,17 @@ then review against ALL of the following:
    verify the task includes real-endpoint verification (Amplify registration, route with
    Cognito authorizer, smoke evidence), NOT mock tests only. Mocked-green with no live
    verification is grounds for REQUEST CHANGES on its own.
+7. Decision consistency — does the change contradict a documented decision? Check spec.md
+   "Out of Scope", plan.md architecture choices, constitution.md approved tools / cost
+   constraints, and AGENTS.md "Known state". Examples: introducing light mode, adding a paid
+   or non-AWS dependency, bypassing the Amplify API client, resurrecting anything from
+   docs/archive/. Cite the contradicted decision in the finding.
 
 Output format:
 - Verdict: APPROVE or REQUEST CHANGES
 - Critical issues (must fix) — each: file, line, problem, concrete fix
 - Warnings (should fix) — same format
-- One-line note per review area (1–6) confirming what you checked
+- One-line note per review area (1–7) confirming what you checked
 ```
 
 Commit the file.
@@ -811,7 +816,7 @@ The audit's root-cause finding: the unwired backend wasn't an agent failure, it 
 
 ## Part 5 — Review layers, including Codex
 
-**Inner loop (automatic, every task):** the code-reviewer subagent, invoked as step 4 of `/ship`. It runs in its own context with read-only tools, reviews against the six criteria (including the two audit-driven ones), and the main agent fixes what it reports. You never courier anything.
+**Inner loop (automatic, every task):** the code-reviewer subagent, invoked as step 4 of `/ship`. It runs in its own context with read-only tools, reviews against the seven criteria (including the two audit-driven ones), and the main agent fixes what it reports. You never courier anything.
 
 **Outer loop (optional, once per user story, PR level only):** a second opinion from a different model family catches blind spots a same-model reviewer shares.
 
@@ -1137,7 +1142,7 @@ Rules that make this safe:
 - **Plan Mode** has no Codex equivalent; the AGENTS.md rule "propose a plan and WAIT for explicit approval" plus `approval_policy = "on-request"` approximates it. Hold Codex to it: if it starts editing without an approved plan, stop it and point at AGENTS.md.
 - **Per-command allow/deny permissions** (Part 3.2) don't exist in Codex; the sandbox (`workspace-write`) plus approval prompts are the substitute. Force-push protection therefore relies on the AGENTS.md rules and on GitHub itself — consider enabling branch protection for `main` in the repo settings (Settings → Branches → protect `main`), which backstops *both* tools at the server.
 - **/rewind** is Claude-specific; on Codex, your checkpoint is git — commit early on the branch, `git checkout .` to abandon.
-- **The code-reviewer's six-criteria prompt** lives in the subagent file Codex can't use; when Codex runs `/review`, paste the six criteria from Part 3.4 into the review request the first time you need a thorough pass.
+- **The code-reviewer's seven-criteria prompt** lives in the subagent file Codex can't use; when Codex runs `/review`, paste the seven criteria from Part 3.4 into the review request the first time you need a thorough pass.
 
 ### Dual-tool additions to the migration checklist
 

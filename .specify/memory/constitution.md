@@ -346,6 +346,21 @@ test('Hub event updates session', () => {
 - Provide deterministic fixtures for Dynamo (seed in `beforeEach` via mocks) and stable timestamps via `Date.now = jest.fn().mockReturnValue(...)`.
 - Keep integration test runtime under 5s; parallelize with `jest --runInBand` only when mocks require it.
 
+### Backend Verification (Real Endpoint Rule)
+
+A backend task (Lambda, API route, or wiring/infrastructure) is **not done** until the deployed
+endpoint answers correctly. Mocked-green unit tests never satisfy backend acceptance on their own.
+
+Every backend task's acceptance must include:
+- The function is registered with Amplify and the route exists in API Gateway with the Cognito
+  authorizer attached
+- A live smoke request from a signed-in session returns the expected status code and DTO shape
+- The smoke evidence is recorded in docs/manual_testing/
+
+**Why:** T023/T024 passed all mocked tests and were marked done while the deployed API had no
+/profile route at all (audit 2026-07-11, finding C1). Tests that never touch the real endpoint
+cannot catch unwired infrastructure.
+
 ### IAM and Amplify Usage Rules (Tests)
 
 - No live AWS or OpenAI calls in CI; tests must rely on mocks or localstack/Amplify mock.

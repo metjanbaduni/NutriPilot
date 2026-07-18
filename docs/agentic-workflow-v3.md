@@ -1,7 +1,7 @@
 # NutriPilot Agentic Development Workflow v3
 
-**Version:** 3.2
-**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them)
+**Version:** 3.3
+**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills)
 **Replaces:** `docs/agentic-workflow-v2.md` (deleted)
 **Corrected against:** `docs/audit-2026-07-11.md` (the repo audit; where v2 and the audit conflict, the audit wins)
 **Audience:** Product Owner with junior dev skills, using Claude Code + Claude Design
@@ -243,6 +243,8 @@ This document is the *only* process document — everything that competes with i
 
 Generate Settings too, even though that screen already exists in the app — comparing the generated screen to the running app is a free audit of what shipped.
 
+> **Once the skills exist:** every screen export is followed by `/design-spec-sync <screen>` so the docs catch up with what you approved visually. Part 4.0 is the full per-screen ritual.
+
 **Reason:** the screens are the spec rendered in the only format you can review at a glance, which makes generating them a **requirements review you're qualified to do**. Proof it works: walking the Dashboard mockup against the API contract already exposed a real gap — the spec's Dashboard shows a "Nutritionist Analysis" panel, but the `GET /api/dashboard` response contains no field that could feed it, and no task builds it. You'll hit that exact item in 2.3.
 
 **Verify:** `ls docs/design/screens/` shows the four PNGs plus NOTES.md, and NOTES.md has at least a few lines (if it's empty, you reviewed too fast — the Nutritionist Analysis contradiction alone should be on it).
@@ -346,7 +348,7 @@ Three sizes of change:
 
 > Requirement change: <describe it in your own words, naming the requirement ID if it exists>. (1) Propose the spec.md edit — changed or new requirement line, keeping the ID scheme. (2) Tell me whether the design screen needs regenerating, yes or no, and why. (3) Show the tasks.md impact: which cards change, which are added, and — say it explicitly — whether any already-completed task is invalidated by this change. (4) Wait for my approval, then apply the spec.md and tasks.md edits in one commit: "spec: <short description>". Do not write code in this session.
 
-Point (3) is the one that protects you: "this invalidates T031, the Dashboard component you already shipped" is exactly the sentence that must be said *before* you commit to a change, not discovered after. If the screen needs regenerating, that's your 2.1 homework before the change's tasks start.
+Point (3) is the one that protects you: "this invalidates T031, the Dashboard component you already shipped" is exactly the sentence that must be said *before* you commit to a change, not discovered after. If the screen needs regenerating, that's your 2.1 homework before the change's tasks start — and the regenerated screen then flows through the Part 4.0 ritual (`/design-spec-sync`, then `/groom`) like any other screen change.
 
 **Reason:** the old flow's failure mode was drift between many generated files; the fix is not more discipline updating them — it's having fewer files, edited directly, in the same commit. Three touchpoints is the minimum that keeps the three altitudes true, and anything beyond it has to justify itself.
 
@@ -762,6 +764,37 @@ jobs:
 ---
 
 ## Part 4 — The per-task ritual and how to write tasks
+
+### 4.0 The PO content flow: screens → specs → tasks → code
+
+**Why this section exists:** everything you build travels down one chain — a **Claude Design screen** becomes lines in **spec.md + DESIGN.md**, which become cards in **tasks.md**, which become **code**. Every arrow in that chain is a *translation step*, and translation is where information gets lost or quietly distorted: a screen shows a panel the spec never mentions, a card promises a state the docs dropped, code implements a card that no longer matches the spec. US2's unwired backend was exactly this — a loss at the docs → cards arrow that nobody was guarding.
+
+So each arrow gets a guard:
+
+| Handoff | Guarded by |
+|---|---|
+| screen → spec.md + DESIGN.md | `/design-spec-sync` (skill) |
+| spec.md + DESIGN.md → tasks.md | `/groom` (skill) |
+| tasks.md → code | the per-task ritual (4.1) + the code-reviewer |
+
+**The per-screen ritual.** Every screen — new or changed — goes through these six steps, in order:
+
+1. **GENERATE** the screen in Claude Design, against the locked design system.
+2. **PO APPROVES** visually — you look at the picture and say yes. This is your altitude.
+3. **EXPORT** the approved screen into the repo.
+4. **`/design-spec-sync <screen>`** — answer its questions — spec.md and DESIGN.md now match the screen.
+5. **`/groom <story>`** — the story's task cards now match the docs.
+6. **IMPLEMENT** via the per-task ritual (4.1).
+
+**The iron rule: changes flow downstream only, always through the gates.** If you don't like what you see, change the *screen* (step 1) and let the change flow down through sync and groom. Never hand-edit tasks.md to match a screen while the docs are stale — it feels faster, but the next `/groom` run cross-checks cards against the current docs and will revert your edit as drift. Change the screen, sync, groom. Same energy as "requirements decided in chat evaporate" (2.7): a decision that skips a gate isn't recorded anywhere the gates can see.
+
+**The three-way classification.** When `/design-spec-sync` finds the screen and the docs disagreeing, it sorts every discrepancy into exactly one of three bins:
+
+- **Product decision** — screen and docs disagree on WHAT the feature does. Only you can settle this; it comes to you as a question with a recommendation. Example: the screen shows a Nutritionist Analysis panel the API can't feed — defer it or spec it?
+- **Doc gap** — the screen shows something the docs simply don't describe yet. The agent drafts the doc update, clearly marked as new, for your approval.
+- **Rule violation** — the screen breaks an established design rule (fixed macro colors, dark-only, four states, no icons/emoji). Here the *screen* is wrong, not the rule: you fix it in Claude Design and re-export. Rules never bend to match a screen, because each rule was a decision you already made once — a screen that violates it is a generation glitch, and weakening the rule to accommodate a glitch would silently reopen every screen that decision covers.
+
+**The control principle.** Every gate produces the same two outputs: a **diff** (what the agent proposes to change) and a **questions list** (what it couldn't decide). You review the diff and answer the questions — you never re-read whole documents to find what moved. And the mirror rule for the agent: anything ambiguous *must* surface as a question. Silent gap-filling is forbidden at every station — a gap filled silently is a product decision made by nobody.
 
 ### 4.1 The ritual
 

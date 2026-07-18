@@ -18,6 +18,8 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
 - Spec: `spec.md` (root). Quality rules: `.specify/memory/constitution.md`. Plan: `specs/000-planning-phase/plan.md`
 - Backlog SOURCE OF TRUTH: `specs/000-planning-phase/tasks.md` — work only on assigned tasks;
   unchecked tasks are not implemented yet; mark `[x]` (and only then) when a task's DoD is met
+- Harness reference (skills, hooks, subagents, how to use them): docs/HARNESS.md.
+  Update it in the same commit whenever the harness changes.
 
 ## Design system — SOURCE OF TRUTH
 - Tokens + component contracts: `docs/design/DESIGN.md` and `docs/design/tokens/*.css`
@@ -64,5 +66,8 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
 - Never commit to main. Work on a feature branch (repo convention: NNN-short-name)
 - Run `npm run verify` and `npm run build` before claiming any task is done
 - Update the tasks.md checkbox only when every DoD line is genuinely met — and report gaps instead of checking the box
+- PO content flow (screens → specs → tasks): see docs/agentic-workflow-v3.md. Docs
+  change via /design-spec-sync, task cards via /groom — never hand-edit tasks.md to
+  match a screen while spec.md/DESIGN.md are stale.
 - Never push or open a PR without explicit approval
 - If requirements are ambiguous, ask — do not guess

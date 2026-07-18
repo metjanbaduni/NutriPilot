@@ -69,5 +69,7 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
 - PO content flow (screens → specs → tasks): see docs/agentic-workflow-v3.md. Docs
   change via /design-spec-sync, task cards via /groom — never hand-edit tasks.md to
   match a screen while spec.md/DESIGN.md are stale.
+- Learning loop: after each story (or any task that went badly), run /retro to
+  convert mistakes into gates. See docs/agentic-workflow-v3.md.
 - Never push or open a PR without explicit approval
 - If requirements are ambiguous, ask — do not guess

@@ -1,7 +1,7 @@
 # NutriPilot Agentic Development Workflow v3
 
-**Version:** 3.3
-**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills)
+**Version:** 3.4
+**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3)
 **Replaces:** `docs/agentic-workflow-v2.md` (deleted)
 **Corrected against:** `docs/audit-2026-07-11.md` (the repo audit; where v2 and the audit conflict, the audit wins)
 **Audience:** Product Owner with junior dev skills, using Claude Code + Claude Design
@@ -267,20 +267,20 @@ This is the step that replaces micromanagement. Before any story starts, one ses
 
 **Instruction:** Fresh session, Plan Mode, paste:
 
-> Story Kickoff for User Story 3 (Dashboard). Read: the Dashboard and GET /api/dashboard sections of spec.md (with requirement IDs); the design screens docs/design/screens/dashboard.png and dashboard-empty.png; docs/design/screens/NOTES.md; the US3 block in specs/000-planning-phase/tasks.md; and the task-writing rules in docs/agentic-workflow-v3.md Part 4.2. Do NOT write any code or edit any file yet. Report, in this order:
+> Story Kickoff for User Story 3 (Dashboard). Read: the Dashboard and GET /api/dashboard sections of spec.md (with requirement IDs); the design screens docs/design/screens/dashboard.png and dashboard-empty.png; docs/design/screens/NOTES.md; the US3 block in specs/000-planning-phase/tasks.md; and the task-writing rules in docs/agentic-workflow-v3.md Part 4.3. Do NOT write any code or edit any file yet. Report, in this order:
 > 1. Requirements (by ID) with no covering task.
 > 2. Tasks or task clauses with no requirement behind them (scope creep).
 > 3. Contradictions — inside spec.md, or between spec.md and the design screens.
 > 4. Missing mandatory categories. Every story must contain all six: UI states / frontend logic / backend handler / infrastructure+wiring+deploy / tests / Demo Gate.
 > 5. Decisions only I can make — each as a plain-language question with 2–3 options and your recommendation.
-> Then propose the corrected US3 task block: full Task Card format (Part 4.2), backend cards shaped like T046, Demo Gate last, new tasks numbered from T049. Wait for my approval before touching tasks.md.
+> Then propose the corrected US3 task block: full Task Card format (Part 4.3), backend cards shaped like T046, Demo Gate last, new tasks numbered from T049. Wait for my approval before touching tasks.md.
 
 **Reason:** every gap caught here costs one line in a task card; the same gap caught after implementation costs a rework session, and caught after "story complete" it costs an audit. US2 is the proof — its missing wiring task was invisible for months precisely because no step ever compared the three altitudes.
 
 **Verify — grade the report against this answer key.** A good US3 kickoff must surface at least these (all confirmed by inspection on 2026-07-13); if it misses two or more, say *"Re-check the States and Interactions lists against the tasks"*:
 
 - **Nutritionist Analysis panel** (Dashboard layout): no field for it in the API-05 response schema, no task builds it — a spec-internal contradiction *and* a coverage gap.
-- **No wiring/deploy task**: T027 (as currently written in tasks.md) creates only the Lambda source — US2's C1 failure about to repeat. The fix is the T046-shaped T027 card from Part 4.2.
+- **No wiring/deploy task**: T027 (as currently written in tasks.md) creates only the Lambda source — US2's C1 failure about to repeat. The fix is the T046-shaped T027 card from Part 4.3.
 - **Meal-card accordion expand** and **pull-to-refresh** (Interactions): in no task.
 - **No seeding mechanism**: US3's own Independent Test says "after seeding meals," but nothing can create a meal until US4 — the story as written cannot execute its own test.
 - **No Demo Gate**: the Independent Test exists as prose, with no checkbox that forces its execution.
@@ -775,7 +775,7 @@ So each arrow gets a guard:
 |---|---|
 | screen → spec.md + DESIGN.md | `/design-spec-sync` (skill) |
 | spec.md + DESIGN.md → tasks.md | `/groom` (skill) |
-| tasks.md → code | the per-task ritual (4.1) + the code-reviewer |
+| tasks.md → code | the per-task ritual (4.2) + the code-reviewer |
 
 **The per-screen ritual.** Every screen — new or changed — goes through these six steps, in order:
 
@@ -784,7 +784,7 @@ So each arrow gets a guard:
 3. **EXPORT** the approved screen into the repo.
 4. **`/design-spec-sync <screen>`** — answer its questions — spec.md and DESIGN.md now match the screen.
 5. **`/groom <story>`** — the story's task cards now match the docs.
-6. **IMPLEMENT** via the per-task ritual (4.1).
+6. **IMPLEMENT** via the per-task ritual (4.2).
 
 **The iron rule: changes flow downstream only, always through the gates.** If you don't like what you see, change the *screen* (step 1) and let the change flow down through sync and groom. Never hand-edit tasks.md to match a screen while the docs are stale — it feels faster, but the next `/groom` run cross-checks cards against the current docs and will revert your edit as drift. Change the screen, sync, groom. Same energy as "requirements decided in chat evaporate" (2.7): a decision that skips a gate isn't recorded anywhere the gates can see.
 
@@ -796,7 +796,38 @@ So each arrow gets a guard:
 
 **The control principle.** Every gate produces the same two outputs: a **diff** (what the agent proposes to change) and a **questions list** (what it couldn't decide). You review the diff and answer the questions — you never re-read whole documents to find what moved. And the mirror rule for the agent: anything ambiguous *must* surface as a question. Silent gap-filling is forbidden at every station — a gap filled silently is a product decision made by nobody.
 
-### 4.1 The ritual
+### 4.1 The learning loop: how mistakes become gates
+
+**Why this section exists:** the agent cannot learn. Its brain is frozen — nothing it figures out in a session survives `/clear`. All "learning" in this workflow is lessons written into the files it reads at session start: AGENTS.md, the constitution, the skills, the hooks, the card template. **The files are the memory.** If a mistake taught you something and no file changed, the lesson does not exist — the next session will happily make the same mistake with the same confidence.
+
+The gates you already have catch most mistakes *in-session*: the lint hook catches style and complexity on every edit, the code-reviewer catches constitution and design-system violations before commit, CI catches broken builds, and the real-endpoint smoke test catches "done but not deployed." The gap is everything that *escapes* those gates and gets caught late — by you at a Demo Gate, by a `fix:` commit the week after, by an audit months later. Each of those late catches is evidence that some gate should have fired earlier, or that a gate is missing entirely.
+
+**The loop** closes that gap:
+
+```
+implement → gates catch what they can → what escapes is caught late
+     ↑                                              │
+     │                                              ▼
+next session inherits the files ← PO approves ← /retro mines the
+                                    /rejects     evidence, drafts lessons
+```
+
+`/retro` reads only durable evidence — git history, PR threads, reviewer verdicts, manual-test docs, grooming question lists — because the sessions themselves are gone. It drafts each lesson as a concrete file change, you approve or reject, and approved lessons land in the standing files. That's the whole mechanism.
+
+**The enforcement ladder.** For every proposed lesson, `/retro` must pick the strongest enforcement that fits, in this order: **structural change** (a card-template field or skill step — impossible to skip) → **hook or lint rule** (a script, fires every time) → **reviewer criterion** (checked once per task) → **prose rule** in AGENTS.md or the constitution (depends on the agent reading and honoring it — the weakest). The standing question for every proposal, yours and the agent's alike: *"could this be a check instead of a sentence?"* A sentence costs context in every future session and can be ignored; a check costs nothing until it fires and cannot be.
+
+**Why your approval gate stays.** A system that rewrites its own rules ungoverned has three failure modes: **rule bloat** (every hiccup becomes a paragraph, and the standing orders drown in their own weight), **wrong generalizations** (one bad afternoon becomes a permanent rule against something that wasn't the problem), and **self-grading** (the agent that made the mistake decides what the mistake was). Reviewing retro proposals is governance, not micromanaging — it's the same altitude contract as everywhere else: the agent drafts, you decide. Your four review questions for each proposal:
+
+1. Could this be a **check instead of a sentence**? (If yes, push it up the ladder.)
+2. What does this **cost every future session**? (Lines in standing orders are paid on every prompt.)
+3. Is this a **real pattern or a one-off**? (One occurrence is an anecdote; the retro must argue the pattern.)
+4. What did the retro **miss that I personally tripped over**? (You saw friction the git history can't show — add it.)
+
+**The honest framing:** this loop does not make mistakes impossible; it makes each *kind* of mistake payable once. The first occurrence is tuition. The retro converts it into a gate, and the net tightens with every story — the unwired-backend class of failure can't recur because it became the Real Endpoint Rule; whatever US3 teaches will become a gate the same way. Rare, not impossible.
+
+**When to run:** after each story's quality gate passes — ideally before `/clear`, while the branch and PR are fresh — or immediately after any task that went badly enough that you'd hate to repeat it. `/retro US3` for a story; `/retro T047` for a single painful task. An empty proposal list is a valid outcome: a story that taught nothing new means the gates are working.
+
+### 4.2 The ritual
 
 Every task follows this loop. Print it.
 
@@ -819,7 +850,7 @@ Every task follows this loop. Print it.
 
 Why each part: fresh start (0, 8) prevents context rot — CLAUDE.md carries everything persistent. The branch (1) is your checkpoint: a wrong direction costs a `git checkout main`, not a debugging week (and `Esc Esc` / `/rewind` rolls back mid-task; note that rewind tracks Claude's file edits, not changes made via bash commands). Plan Mode (2–3) is the book's #1 practice — plans are cheap, wrong implementations aren't, and nine times out of ten the first plan should be simplified. Verify before ship (5 before 6): never review code for a UI you haven't seen working. You merge (7): human oversight is the final gate, always.
 
-### 4.2 Writing tasks — the rules that prevent the next C1
+### 4.3 Writing tasks — the rules that prevent the next C1
 
 The audit's root-cause finding: the unwired backend wasn't an agent failure, it was a *task-generation* failure — no task ever said "register and deploy," and every acceptance criterion was satisfiable with mocks. These rules fix the generator (you):
 
@@ -883,7 +914,7 @@ This is the whole journey, in one list — Parts 1→2→3 in reading order, the
 4. **US3 Story Kickoff** (Part 2.3–2.4) — the gap report, your decisions, the corrected US3 block with wiring task and Demo Gate. Also document-only. No US3 code before this is approved.
 5. **Harness** (Part 3), then the dry-run task from the Part 7 checklist — set up now, because the next step is the first real implementation.
 6. **Dashboard frontend, mock data first** — the first real task through the full ritual. Prompt it against the *existing* mock: `tests/fixtures/dashboard.js` already contains a response shaped exactly like spec.md's `/api/dashboard` contract (the audit confirmed this — don't create a new mock). Bounded, unblocked by any backend work, and it exercises the design system end to end. Use the screen-task prompt in Part 7.
-7. **Dashboard backend (T027)** — copy T046's wiring pattern (the card in Part 4.2). Then swap the frontend from fixture to the real `src/api/dashboard.js` call — a small, separate task.
+7. **Dashboard backend (T027)** — copy T046's wiring pattern (the card in Part 4.3). Then swap the frontend from fixture to the real `src/api/dashboard.js` call — a small, separate task.
 8. **US3 Demo Gate** (Part 2.5), outer review, merge — the story is now actually done, by the new definition of done.
 9. **Onward, story by story** — US4 via its own Kickoff (Part 2.8), then the Polish phase (T043, T045). Requirement changes along the way go through the Change Intake (Part 2.6), never through chat.
 

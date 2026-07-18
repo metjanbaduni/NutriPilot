@@ -4,21 +4,29 @@
 
 This page inventories what is actually installed in `.claude/` right now, and where each piece fires during normal work. Jargon, one line each: a **skill** is a reusable instruction file you trigger by typing a slash-command (like `/groom`); a **subagent** is a separate AI worker with its own context and a restricted tool list; a **hook** is a script the tool runs automatically at fixed moments — no AI judgment involved.
 
-**Status note (2026-07-18):** `.claude/` currently contains the two skills below and nothing else. The rest of the harness planned in `docs/agentic-workflow-v3.md` Part 3 — settings/permissions, the lint hook, the code-reviewer subagent, `/ship`, `/verify-ui` — is **not installed yet**. Items below are marked *installed* or *planned* accordingly; when a planned item lands, update its entry here (see the maintenance rule).
+**Status note (2026-07-18):** `.claude/` currently contains the three skills below and nothing else. The rest of the harness planned in `docs/agentic-workflow-v3.md` Part 3 — settings/permissions, the lint hook, the code-reviewer subagent, `/verify-ui` — is **not installed yet**. Items below are marked *installed* or *planned* accordingly; when a planned item lands, update its entry here (see the maintenance rule).
 
 ## Skills (installed)
+
+> **NOTE:** /ship is referenced by other skills but not yet created. Until it exists, when a skill says "Ship via /ship", the PO commits and pushes manually instead. Remove this note when /ship lands.
 
 ### /groom — `.claude/skills/groom/SKILL.md`
 - **Purpose:** brings a story's task cards in `specs/000-planning-phase/tasks.md` up to the full Task Card format and in line with the current spec.md and DESIGN.md.
 - **When:** before starting any story, or whenever spec.md / DESIGN.md changed (run `/design-spec-sync` first if the change came from a screen).
 - **Command:** `/groom US4` (or any scope, e.g. `/groom the dashboard story`).
-- **Approval gates:** it only ever touches tasks.md, never code; it shows you the full diff plus a "Questions for the PO" list and **waits for your approval before applying**; the applied change ships through `/ship` like any commit.
+- **Approval gates:** it only ever touches tasks.md, never code; it shows you the full diff plus a "Questions for the PO" list and **waits for your approval before applying**; the applied change ships via `/ship`.
 
 ### /design-spec-sync — `.claude/skills/design-spec-sync/SKILL.md`
 - **Purpose:** reconciles spec.md and `docs/design/DESIGN.md` (plus token files) with a newly exported or changed Claude Design screen.
 - **When:** after every screen export, before grooming or implementing that screen's story.
 - **Command:** `/design-spec-sync dashboard`.
-- **Approval gates:** it only touches spec.md, DESIGN.md, and `docs/design/tokens/*` — never tasks.md or code; every discrepancy is classified (product decision → question for you; doc gap → drafted update; rule violation → screen goes back to Claude Design) and **product decisions always wait for your answer**; doc changes ship through `/ship`.
+- **Approval gates:** it only touches spec.md, DESIGN.md, and `docs/design/tokens/*` — never tasks.md or code; every discrepancy is classified (product decision → question for you; doc gap → drafted update; rule violation → screen goes back to Claude Design) and **product decisions always wait for your answer**; doc changes ship via `/ship`.
+
+### /retro — `.claude/skills/retro/SKILL.md`
+- **Purpose:** end-of-story retrospective — mines the story's durable history (git log, PR threads, reviewer verdicts, manual-test evidence, grooming questions) for mistakes that escaped the gates, and proposes the strongest possible enforcement for each lesson (structural change → hook/lint → reviewer criterion → prose rule, in that order).
+- **When:** after a story's quality gate passes (ideally before `/clear`), or immediately after any task that went badly.
+- **Command:** `/retro US2` (or a single task, e.g. `/retro T047`).
+- **Approval gates:** read-only analysis first; it presents a numbered proposal list (with per-proposal context cost and a "considered and rejected" section) and **applies only what you approve** — an empty list is a valid outcome; approved changes ship via `/ship`. Full rationale: workflow-v3 Part 4.1 (the learning loop).
 
 ## Subagents
 
@@ -28,12 +36,12 @@ This page inventories what is actually installed in `.claude/` right now, and wh
 
 - **None installed.** Planned (workflow-v3 Part 3.2–3.3): `.claude/settings.json` with pre-approved safe commands and hard denies (force-push, `rm -rf`, reading `.env`), and a **lint-on-edit hook** — after every file Claude edits or writes, a script runs ESLint on that file and feeds errors straight back so they're fixed immediately.
 
-## Typical task walkthrough (per-task ritual, workflow-v3 Part 4.1)
+## Typical task walkthrough (per-task ritual, workflow-v3 Part 4.2)
 
 1. **Plan** — you paste the task prompt in Plan Mode; nothing fires yet.
 2. **Implement** — Claude edits files. *Planned:* the lint hook fires on every edit.
 3. **`/verify-ui`** *(planned skill, Part 3.6)* — Claude opens the screen in a real browser, screenshots it, and checks it against DESIGN.md.
-4. **`/ship`** *(planned skill, Part 3.5)* — runs the quality gate and build, *planned:* delegates to the code-reviewer subagent, updates the tasks.md checkbox, then **stops for your approval** before committing, pushing, and opening the PR.
+4. **`/ship`** (Part 3.5; see the NOTE in the skills inventory) — runs the quality gate and build, *planned:* delegates to the code-reviewer subagent, updates the tasks.md checkbox, then **stops for your approval** before committing, pushing, and opening the PR.
 5. **CI** *(planned, Part 3.7 / T048)* — GitHub re-runs `npm run verify && npm run build` on the pushed branch; you merge when green.
 6. **`/clear`** — next task starts with a fresh context.
 

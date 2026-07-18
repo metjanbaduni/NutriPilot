@@ -468,10 +468,10 @@ flag it instead of guessing or inventing a new value.
 ```
 
 **States:**
-- Empty: "No meals logged today" + big "+ Log First Meal" button
-- Loading: Skeleton placeholders
+- Empty: "No meals logged today" + big "+ Log First Meal" button (EmptyState contract in docs/design/DESIGN.md)
+- Loading: LoadingState contract in docs/design/DESIGN.md
 - Populated: All meals, totals, analysis
-- Error: Banner "Failed to load. Tap to retry."
+- Error: Banner "Failed to load. Tap to retry." (ErrorState contract in docs/design/DESIGN.md)
 
 **Interactions:**
 - Tap settings → `/settings`
@@ -482,7 +482,7 @@ flag it instead of guessing or inventing a new value.
 
 **Codex generates:** React component that:
 1. On mount: Call `GET /api/dashboard`
-2. Display loading skeletons
+2. Display the LoadingState (docs/design/DESIGN.md)
 3. Render all sections with data
 4. Handle errors with retry
 

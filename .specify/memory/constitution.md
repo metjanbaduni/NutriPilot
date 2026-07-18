@@ -1404,7 +1404,7 @@ function complexMacroCalculation() {
 - PRs: Include tests + AI review
 
 ### Performance ✅
-- FCP: < 1.5s
+- FCP: < 2s
 - TTI: < 3s
 - API: < 200ms
 - Input: < 100ms response

@@ -17,17 +17,17 @@ components:
   schemas:
     ProfileRequest:
       type: object
-      required: [bodyWeight, height, age, gender, activityLevel, goal]
+      required: [bodyWeightKg, heightCm, ageYears, gender, activityLevel, goal]
       properties:
-        bodyWeight:
+        bodyWeightKg:
           type: number
           minimum: 30
           maximum: 250
-        height:
+        heightCm:
           type: number
           minimum: 120
           maximum: 220
-        age:
+        ageYears:
           type: integer
           minimum: 16
           maximum: 80
@@ -42,14 +42,14 @@ components:
           enum: [bulk, maintain, cut]
     Profile:
       type: object
-      required: [email, bodyWeight, height, age, gender, activityLevel, goal, updatedAt]
+      required: [email, bodyWeightKg, heightCm, ageYears, gender, activityLevel, goal, updatedAt]
       properties:
         email:
           type: string
           format: email
-        bodyWeight: { type: number }
-        height: { type: number }
-        age: { type: integer }
+        bodyWeightKg: { type: number }
+        heightCm: { type: number }
+        ageYears: { type: integer }
         gender: { type: string }
         activityLevel: { type: string }
         goal: { type: string }
@@ -58,12 +58,13 @@ components:
           format: date-time
     Targets:
       type: object
-      required: [protein, carbs, fats, calories, calculatedAt]
+      required: [proteinGrams, carbGrams, fatGrams, calories, calculatedAt]
       properties:
-        protein: { type: number }
-        carbs: { type: number }
-        fats: { type: number }
+        proteinGrams: { type: number }
+        carbGrams: { type: number }
+        fatGrams: { type: number }
         calories: { type: number }
+        tdee: { type: number }
         calculatedAt:
           type: string
           format: date-time
@@ -158,7 +159,7 @@ components:
             fats: { type: number, minimum: 0 }
 
 paths:
-  /api/profile:
+  /profile:
     post:
       summary: Update profile metrics and recalculate targets.
       requestBody:
@@ -194,7 +195,7 @@ paths:
                   profile: { $ref: '#/components/schemas/Profile' }
                   targets: { $ref: '#/components/schemas/Targets' }
 
-  /api/meals:
+  /meals:
     post:
       summary: Log a meal; optional AI analysis.
       requestBody:
@@ -243,7 +244,7 @@ paths:
                       $ref: '#/components/schemas/Meal'
                   count: { type: integer }
 
-  /api/meals/analyze:
+  /meals/analyze:
     post:
       summary: Run AI macro analysis without saving.
       requestBody:
@@ -273,7 +274,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/MealIngredient'
 
-  /api/dashboard:
+  /dashboard:
     get:
       summary: Fetch dashboard summary for current day.
       responses:
@@ -306,7 +307,7 @@ paths:
                       fats: { type: boolean }
                       calories: { type: boolean }
 
-  /api/meals/{mealId}:
+  /meals/{mealId}:
     delete:
       summary: Delete a meal and recalculate daily totals.
       parameters:

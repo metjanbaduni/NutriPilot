@@ -6,15 +6,18 @@ description: "Task list for NutriPilot MVP Foundation"
 # Tasks: NutriPilot MVP Foundation
 
 **Input**: Design documents from `/specs/000-planning-phase/`
-**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/openapi.yaml, quickstart.md
+**Prerequisites**: plan.md, spec.md (repo root), research.md, data-model.md, contracts/openapi.yaml, quickstart.md
 
-Tests are required to maintain ≥80% coverage per spec.md and plan.md.
+Tests are required to maintain ≥80% coverage per .specify/memory/constitution.md and plan.md.
 
 ## Execution Defaults (applies to all tasks unless overridden)
 - Scope: Modify only files listed in the task.
 - Standards: Follow spec.md, plan.md, and .specify/memory/constitution.md.
 - Testing: Run tests listed on the task; run full suite only at phase checkpoints.
 - Completion: Mark the task [x] in this file when done.
+- Sessions: size tasks to finish in one session; a session ends with the task
+  shipped or not started. If forced to stop mid-task, append a 'Progress:' line to
+  the task card (done / next / files touched); remove it on completion.
 - Decisions: If a required decision is not specified, stop and ask.
 
 ## Task Card Template (use for new tasks)
@@ -27,16 +30,13 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 ## User Story Quality Gate (run before moving to next story)
 - [ ] All tasks in the story are marked complete in this file.
-- [ ] `npm test` passes (or specified subset if agreed).
-- [ ] `npm run test:coverage` passes with ≥80% global.
-- [ ] `npm run lint` passes.
-- [ ] `npm run format:check` passes.
+- [ ] `npm run verify` passes (lint + format check + tests with ≥80% global coverage).
 - [ ] Manual test doc for the story exists and is executed.
 - [ ] Independent Test executed against the dev environment and passed.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
+- **[P]**: No shared files or dependencies with sibling tasks — order between them is free (single-agent workflow: not simultaneous work)
 - **[Story]**: User story label (US1, US2, ...); omit for setup/foundational/polish tasks
 
 ---
@@ -174,6 +174,8 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
     `amplify/backend/function/getProfile/*`, `amplify/backend/function/updateProfile/*`
   - Notes: Register getProfile/updateProfile with Amplify; add GET/POST /profile with Cognito
     authorizer; decide nutripilotFunction's fate (implement as router or remove); amplify push.
+    The routing pattern decided here (router Lambda vs one function per path) is reused by all
+    later backend wiring (T027, T037–T040) — record the decision in docs/decisions/.
   - Tests: existing `tests/lambdas/*.test.js` still pass; manual smoke per docs/manual_testing/profile-onboarding.md
   - Acceptance: GET and POST /profile return live 200s with the DTO shape from a signed-in session;
     settings screen round-trips against real AWS; US2 Independent Test executed and passing.
@@ -185,44 +187,122 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 ## Phase 5: User Story 3 - Dashboard Insights (Priority: P3)
 
-**Goal**: Users view daily goals, progress, meals, and AI guidance in a responsive dashboard
+**Goal**: Users view daily goals, progress, and meals in a responsive dashboard. (AI guidance /
+"Nutritionist Analysis" is not part of US3 — deferred to backlog task T049.)
 
-**Independent Test**: After seeding meals, load `/dashboard`, verify skeleton -> populated state, progress bars reflect Dynamo totals, and errors show retry CTA
+**Independent Test**: After seeding meals directly in DynamoDB (no meal-logging UI/API exists until US4 — use the AWS console/CLI to put MEAL# + SUMMARY# items), load `/dashboard`, verify loading → populated state, progress bars reflect Dynamo totals, and errors show retry CTA
 
 ### Execution Plan for User Story 3 (Self-Contained Tasks)
 
-- [ ] T027 [P] [US3] Implement `getDashboard` Lambda + unit tests
-  - Files: `amplify/backend/function/getDashboard/src/index.js`
-  - Notes: Query Dynamo entities and compute summaries per spec.
-  - Tests: `tests/lambdas/getDashboard.test.js`
-  - Acceptance: Aggregates profile/targets/meals correctly; handles empty sets; returns dashboard DTO.
-  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+- [ ] T027 [P] [US3] Implement `getDashboard` Lambda, register route, deploy + smoke test
+  - Files: `amplify/backend/function/getDashboard/*` (handler in `src/index.js`); wiring:
+    `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`;
+    evidence: `docs/manual_testing/dashboard-insights.md` (new)
+  - Notes: Query PROFILE, TARGETS, and today's MEAL#/SUMMARY# items via the shared Dynamo
+    client (T011); compute totals and progress (totals/targets × 100) per data-model.md.
+    If PROFILE/TARGETS are missing, return 200 with `profile: null, targets: null` and zeroed
+    totals (the UI renders an EmptyState for this — see T031). Register the function and `GET /dashboard` with the Cognito
+    authorizer per the routing pattern decided in T046; minimal IAM per constitution;
+    `amplify push`.
+  - Tests: `tests/lambdas/getDashboard.test.js` (mocked Dynamo: populated day, empty day,
+    missing profile, missing auth)
+  - Acceptance:
+    - Unit tests: aggregates profile/targets/meals into the Dashboard DTO (openapi.yaml
+      `Dashboard` schema) with correct totals and progress for a seeded day; an empty day
+      returns zeroed totals and `meals: []`; missing auth returns 401.
+    - `getDashboard` is registered with Amplify and `GET /dashboard` exists in API Gateway
+      with the Cognito authorizer attached.
+    - Live smoke: a request from a signed-in session returns 200 with the Dashboard DTO
+      shape (date, profile, targets, totals, progress, meals, mealCount, targetsMet);
+      a request without a token is rejected (401/403).
+  - DoD: `npm run verify` passes; smoke evidence recorded in
+    `docs/manual_testing/dashboard-insights.md`.
 - [ ] T028 [P] [US3] Implement dashboard API helper + tests
   - Files: `src/api/dashboard.js`
-  - Notes: Fetch `/api/dashboard`, normalize progress percentages, reuse shared client.
+  - Notes: Follow the `src/api/profile.js` pattern: `fetchDashboard()` calls `get('/dashboard')`
+    on the shared client (unprefixed path, matching the shipped `/profile` convention and
+    contracts/openapi.yaml). Normalize the response: default `meals` to `[]` and
+    `mealCount` to 0; coerce each `progress` value to a finite number ≥ 0 (default 0);
+    leave 0–100 clamping to the UI progress bar (DESIGN.md MacroProgressBar clamps).
   - Tests: `tests/api/dashboard.test.js`
-  - Acceptance: Success normalization, ApiClientError passthrough, fallback error message.
-  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
-- [ ] T029 [P] [US3] Implement `useDashboard` hook + tests
+  - Acceptance:
+    - On success, resolves to `{ success, date, profile, targets, totals, progress, meals,
+      mealCount, targetsMet }` with the defaults above applied (verified against
+      `tests/fixtures/dashboard.js` and a sparse payload).
+    - An `ApiClientError` thrown by the shared client is rethrown unchanged.
+    - Any other error is replaced with `Error('Unable to load dashboard')`.
+  - DoD: `npm run verify` passes.
+- [ ] T029 [US3] Implement `useDashboard` hook + tests
   - Files: `src/hooks/useDashboard.js`
-  - Notes: Fetch dashboard data, expose loading/error/data, refetch; auto-refresh after mutations.
+  - Notes: Plain hook, no context provider — the dashboard screen is its only consumer.
+    Fetch once on mount via `fetchDashboard`; expose
+    `{ dashboard, isLoading, error, refetchDashboard }`; guard against state updates after
+    unmount (follow the `useProfile` mountedRef pattern). No auto-refresh logic in US3 —
+    `refetchDashboard` is the handle T042 (US4) will call after meal mutations.
   - Tests: `tests/hooks/useDashboard.test.js`
-  - Acceptance: Loading, success, error, and refetch paths covered.
-  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
-- [ ] T030 [P] [US3] Build `DashboardSkeleton` + retry banner components + tests
-  - Files: `src/components/dashboard/DashboardSkeleton.jsx`
-  - Notes: Provide loading/empty/error UI states per spec; match theme.
-  - Tests: `tests/components/dashboard/DashboardSkeleton.test.jsx`
-  - Acceptance: Skeleton, empty, and error retry states render accessibly.
-  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
-- [ ] T031 [P] [US3] Build `Dashboard` component + tests
-  - Files: `src/components/dashboard/Dashboard.jsx`
-  - Notes: Summary cards, progress bars, meal list headers, settings CTA; uses `useDashboard`.
-  - Tests: `tests/components/dashboard/Dashboard.test.jsx`
-  - Acceptance: Loading/empty/error/data states; progress values match payload; CTA present.
-  - DoD: Tests pass; `npm run lint`; `npm run format:check`.
+  - Acceptance:
+    - Initial render: `isLoading === true`, `dashboard === null`, `error === null`.
+    - On fetch success: `dashboard` holds the normalized payload and `isLoading === false`.
+    - On fetch failure: `error` is an `Error`, `dashboard` stays `null`, `isLoading === false`.
+    - `refetchDashboard()` re-runs the fetch; a success after a prior failure clears `error`.
+    - Test run produces no unmounted-update or act warnings.
+  - DoD: `npm run verify` passes.
+- [ ] T030 [P] [US3] Build shared `LoadingState` / `EmptyState` / `ErrorState` components + tests
+  - Files: `src/components/ui/LoadingState.jsx`, `src/components/ui/EmptyState.jsx`,
+    `src/components/ui/ErrorState.jsx`, `src/index.css` (new state classes)
+  - UI/theme: Implement the LoadingState/EmptyState/ErrorState contracts in DESIGN.md exactly
+    (pulsing-dot glass card / dashed-border card with optional CTA / rose alert card with
+    optional retry). Add styles as classes in `src/index.css` alongside `.auth-*`/`.profile-*`,
+    using the existing CSS vars only — no new hex values, no icons/emoji. (Replaces the earlier
+    dashboard-specific `DashboardSkeleton` plan.)
+  - Tests: `tests/components/ui/LoadingState.test.jsx`, `tests/components/ui/EmptyState.test.jsx`,
+    `tests/components/ui/ErrorState.test.jsx`
+  - Acceptance:
+    - LoadingState renders `role="status"` with `aria-live="polite"`, a title, and an
+      optional description.
+    - EmptyState renders title/description and, when `actionLabel` + `onAction` are passed,
+      a primary CTA button that fires the callback on click; without them, no button renders.
+    - ErrorState renders `role="alert"` with the message and, when provided, a ghost retry
+      button that fires its callback on click.
+    - No inline hex/rgba values in the JSX — all styling comes from the new CSS classes.
+  - DoD: `npm run verify` passes.
+- [ ] T031 [US3] Build `Dashboard` screen, mount it at `/dashboard` + tests
+  - Files: `src/components/dashboard/Dashboard.jsx`, `src/components/App.jsx`,
+    `src/index.css` (new `.dashboard-*` classes), `tests/fixtures/dashboard.js`
+  - UI/theme: Dark theme, flat `#0b0f14` background (no orbs). Header: "NutriPilot" title +
+    a "Settings" text link to `/settings` (text label — the design system has no icons).
+    Macro section: one tile per macro (protein, carbs, fats, calories) per the
+    MacroStatCard/MacroProgressBar contracts in DESIGN.md — value/target with units inline,
+    bar width = progress clamped 0–100, fixed macro colors, over-target glow + caption.
+    Meals section: "Today's Meals (N)" heading + one MealCard per meal per DESIGN.md
+    (render without delete wiring — delete arrives in T040/T042). No "Nutritionist
+    Analysis" section — it is not in the dashboard DTO and is deferred to T049.
+  - Tests: `tests/components/dashboard/Dashboard.test.jsx` (mock `useDashboard`; use
+    `tests/fixtures/dashboard.js`). Also fix the fixture: it has `meals: []` with
+    `mealCount: 3` — add meal entries so it is internally consistent, and align its field
+    names with contracts/openapi.yaml (profile: `bodyWeightKg`/`heightCm`/`ageYears`;
+    targets: `proteinGrams`/`carbGrams`/`fatGrams`).
+  - Acceptance (all four states):
+    - Loading: while the fetch is pending, LoadingState (`role="status"`) is visible and no
+      data sections render.
+    - Error: on fetch failure, ErrorState (`role="alert"`) shows with a Retry button;
+      clicking Retry calls `refetchDashboard`, and a subsequent success renders data.
+    - Empty: a payload with `meals: []` renders EmptyState with "No meals logged today" —
+      never a blank area. No CTA button in US3; T042 (US4) adds "+ Log First Meal".
+    - No profile: a payload with `profile: null`/`targets: null` renders EmptyState with copy
+      directing the user to complete their profile, including a working link to `/settings`;
+      macro tiles and meal list do not render.
+    - Populated: with the fixture payload, each macro tile shows `value/target` with unit,
+      its bar width equals the payload progress capped at 100%, and colors match the fixed
+      macro mapping; the meal list renders one card per meal with description + macro
+      values; the meal count matches `mealCount`; the Settings link navigates to `/settings`.
+    - Routing: an authenticated visit to `/dashboard` renders the Dashboard inside AuthGate;
+      the T008 placeholder text is gone.
+  - DoD: `npm run verify` passes.
 
-**Note**: US3 tasks are now self-contained. Prior test-only items (T027/T028) and split items (T032/T033) are folded into the tasks above to avoid follow-up test-only prompts.
+**Note**: US3 tasks are self-contained. Earlier draft items (a test-only pair and split
+skeleton/data tasks, formerly numbered T032/T033) were folded into the cards above; those IDs
+no longer exist.
 
 **Checkpoint**: Dashboard renders accurate real-time macro progress with resilient UX states
 
@@ -243,29 +323,69 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
 
 - [ ] T036 [US4] Implement meals API helper (`listMeals`, `createMeal`, `analyzeMeal`, `deleteMeal`) with optimistic cache updates in `src/api/meals.js`
 - [ ] T037 [US4] Implement `analyzeMeal` Lambda calling OpenAI GPT-4o-mini, caching by description hash, with Secrets Manager lookup in `amplify/backend/function/analyzeMeal/src/index.js`
-  - Files: `amplify/backend/function/analyzeMeal/src/index.js`
-  - Notes: Secrets Manager lookup for OpenAI key; cache by sha256(description); 10s timeout; retry once on invalid JSON.
+  - Files: `amplify/backend/function/analyzeMeal/src/index.js`; wiring:
+    `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`
+  - Precondition: OpenAI API key provisioned in AWS Secrets Manager by the PO before US4
+    grooming starts.
+  - Notes: Secrets Manager lookup for the OpenAI key; cache by sha256(description); 10s
+    timeout; retry once on invalid JSON. Register the function and `POST /meals/analyze`
+    with the Cognito authorizer per the routing pattern decided in T046; `amplify push`.
   - Tests: `tests/lambdas/analyzeMeal.test.js`
   - Acceptance: Returns macros + ingredients; uses cache on hit; normalizes OpenAI errors.
+    Function registered with Amplify; `POST /meals/analyze` route exists with the Cognito
+    authorizer; a live request from a signed-in session returns 200 with
+    `{ success, macros, ingredients }`; a request without a token is rejected.
+  - DoD: `npm run verify` passes; smoke evidence recorded in
+    `docs/manual_testing/meal-logging.md`.
 - [ ] T038 [US4] Implement `saveMeal` Lambda persisting meal, updating summary, and computing calories in `amplify/backend/function/saveMeal/src/index.js`
-  - Files: `amplify/backend/function/saveMeal/src/index.js`
-  - Notes: Validate input; compute calories server-side; update DailySummary atomically if possible.
+  - Files: `amplify/backend/function/saveMeal/src/index.js`; wiring:
+    `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`
+  - Notes: Validate input; compute calories server-side; update DailySummary atomically if
+    possible. Register the function and `POST /meals` with the Cognito authorizer per the
+    T046 routing pattern — note `/meals` serves POST (saveMeal) and GET (getMeals) from
+    different Lambdas, which the T046 routing decision must support; `amplify push`.
   - Tests: `tests/lambdas/saveMeal.test.js`
   - Acceptance: Writes MEAL + SUMMARY; returns updated totals; rejects invalid inputs.
+    Function registered with Amplify; `POST /meals` route exists with the Cognito
+    authorizer; a live request from a signed-in session returns 200 with
+    `{ success, meal, dailyTotals }`; a request without a token is rejected.
+  - DoD: `npm run verify` passes; smoke evidence recorded in
+    `docs/manual_testing/meal-logging.md`.
 - [ ] T039 [US4] Implement `getMeals` Lambda with date-range + limit filters returning ordered meals in `amplify/backend/function/getMeals/src/index.js`
-  - Files: `amplify/backend/function/getMeals/src/index.js`
-  - Notes: Query by PK + SK range; enforce limit max 100; sort by timestamp desc.
+  - Files: `amplify/backend/function/getMeals/src/index.js`; wiring:
+    `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`
+  - Notes: Query by PK + SK range; enforce limit max 100; sort by timestamp desc. Register
+    the function and `GET /meals` with the Cognito authorizer per the T046 routing pattern
+    (shares the `/meals` path with T038 — see note there); `amplify push`.
   - Tests: `tests/lambdas/getMeals.test.js`
   - Acceptance: Returns ordered meals; respects date range and limit; handles empty set.
+    Function registered with Amplify; `GET /meals` route exists with the Cognito authorizer;
+    a live request from a signed-in session returns 200 with `{ success, meals, count }`
+    and honors `startDate`/`endDate`/`limit` query params; a request without a token is
+    rejected.
+  - DoD: `npm run verify` passes; smoke evidence recorded in
+    `docs/manual_testing/meal-logging.md`.
 - [ ] T040 [US4] Implement `deleteMeal` Lambda that removes meal, recomputes summary, and returns updated totals in `amplify/backend/function/deleteMeal/src/index.js`
-  - Files: `amplify/backend/function/deleteMeal/src/index.js`
-  - Notes: Verify ownership; delete meal; recompute summary from remaining meals.
+  - Files: `amplify/backend/function/deleteMeal/src/index.js`; wiring:
+    `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`
+  - Notes: Verify ownership; delete meal; recompute summary from remaining meals. Register
+    the function and `DELETE /meals/{mealId}` with the Cognito authorizer per the T046
+    routing pattern; `amplify push`.
   - Tests: `tests/lambdas/deleteMeal.test.js`
   - Acceptance: Deletes meal; updates summary; idempotent error on missing meal.
+    Function registered with Amplify; `DELETE /meals/{mealId}` route exists with the
+    Cognito authorizer; a live request from a signed-in session returns 200 with
+    `{ success, deletedMealId, updatedDailyTotals }`; a request without a token is rejected.
+  - DoD: `npm run verify` passes; smoke evidence recorded in
+    `docs/manual_testing/meal-logging.md`.
 - [ ] T041 [US4] Build `MealModal` component with AI analyze button, manual macro inputs, and validation in `src/components/meals/MealModal.jsx`
 - [ ] T042 [US4] Integrate meal modal triggers, reload hooks, and delete confirmations into dashboard list in `src/components/dashboard/Dashboard.jsx`
 
 **Checkpoint**: Meal lifecycle fully functional with AI assist and accurate summaries
+
+### Backlog (un-groomed — groom before scheduling)
+
+- [ ] T049 Add "Nutritionist Analysis" section to the dashboard (AI guidance deferred from US3; requires API contract change, backend work, and UI — no field for it exists in the dashboard DTO today)
 
 ---
 
@@ -296,36 +416,34 @@ Tests are required to maintain ≥80% coverage per spec.md and plan.md.
   - Acceptance: lint fails on a 51-line function; CI visible and green on the PR.
   - DoD: `npm run verify`.
 
+- [ ] T050 [P] Build `TopNav` component per the DESIGN.md contract (logo + Sign Out below 1024px; nav pills Dashboard / Log Meal / Weekly / Settings at 1024px+) and adopt it across screens (un-groomed — groom before scheduling)
+
 ---
 
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **User Stories (Phases 3–6)** → **Polish**
 - User Story dependencies: US1 (Auth) enables US2 (Profile), US2 enables US3 (Dashboard) and US4 (Meal logging). US3 + US4 share API hooks but remain independently testable once US2 data exists.
+- T046 (profile wiring + the API Gateway routing-pattern decision) must land before any other
+  backend wiring: T027 and T037–T040 reuse its pattern.
+- Within US3: T028 → T029 → T031; T030 is independent of T028/T029 but must precede T031.
 - Backend Lambdas depend on the shared Dynamo client (T011) and macro helper (T022).
 - React hooks/components consume contexts created in T009 + T026.
 
 ## Parallel Execution Opportunities
 
-- Setup configs (T003–T005) can proceed in parallel once dependencies are installed.
+[P] marks tasks with no shared files or dependencies among their siblings. With our one-agent
+sequential workflow this never means simultaneous work — only that the order between those
+tasks is free.
+
+- Setup configs (T003–T005) are order-independent once dependencies are installed.
 - Foundational helpers (T010–T012) are independent of each other.
-- Within US1, LoginForm (T015) and RegisterForm (T016) can be built simultaneously after tests.
-- US2 Lambdas (T023, T024) can run in parallel after macro helper (T022).
-- US3 UI (T030, T031) and hook (T029) can be done concurrently after API helper (T028).
-- US4 Lambdas (T037–T040) can be staffed in parallel because they touch different handlers/files.
-
-## Parallel Example: User Story 4
-
-```bash
-# Lambda engineers in parallel
-T037 -> amplify/backend/function/analyzeMeal/src/index.js
-T038 -> amplify/backend/function/saveMeal/src/index.js
-T039 -> amplify/backend/function/getMeals/src/index.js
-T040 -> amplify/backend/function/deleteMeal/src/index.js
-
-# Frontend engineer
-T035 tests + T041 MealModal.jsx + T042 dashboard wiring
-```
+- Within US1, LoginForm (T015) and RegisterForm (T016) are independent after tests.
+- US2 Lambdas (T023, T024) are independent after the macro helper (T022).
+- Within US3, T027 (backend) and T030 (state components) are independent of the
+  T028 → T029 → T031 chain.
+- US4 Lambdas (T037–T040) touch different handlers, but each carries its own route wiring +
+  deploy, so in practice they run sequentially.
 
 ## Implementation Strategy
 

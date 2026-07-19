@@ -1,12 +1,14 @@
 # NutriPilot Agentic Development Workflow v3
 
-**Version:** 3.4
-**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3)
+**Version:** 3.5
+**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3; updated 2026-07-19: document-sync pass — fixed stale cross-references, synced the Part 7 checklist with the repo, defined the Kickoff-vs-/groom boundary, reordered Part 6 to match the groomed self-contained US3 cards, added housekeeping steps to the /ship spec and the design-screen comparison to /verify-ui; same date, goal-review pass — added the prose-vs-state maintenance rule and compressed the completed steps 0.1/0.2, made the slim importing CLAUDE.md the 3.1 default and retired the monolith, allowed Part 3 in one session with the dry-run as its acceptance test, deferred Part 8 until first rate-limit, corrected the mock-data framing in Part 0 and the Part 7 prompts, and routed the spec.md /api-prefix fix into the 2.2 session)
 **Replaces:** `docs/agentic-workflow-v2.md` (deleted)
 **Corrected against:** `docs/audit-2026-07-11.md` (the repo audit; where v2 and the audit conflict, the audit wins)
 **Audience:** Product Owner with junior dev skills, using Claude Code + Claude Design
 
 **How to read this document:** every setup step has three parts — **Instruction** (exactly what to do, with ready-to-paste content), **Reason** (why it matters), and **Verify** (how you confirm it worked). Technical terms are defined the first time they appear. All config blocks are complete; nothing says "adjust as needed" without telling you exactly what to adjust.
+
+**Maintenance rule (added 2026-07-19):** state lives in the Part 7 checklist and the repo, never in prose. When a step completes or a claim is superseded, replace its prose with a one-line status pointer — full instructions stay only for steps not yet done. Prose that duplicates repo state is where drift comes from.
 
 ---
 
@@ -25,7 +27,7 @@ v2's diagnosis of the old Codex ↔ Copilot workflow stands: you were the messag
 | **Bounded tasks** — "Assign well-defined, single-responsibility tasks" | One task card per session, fresh context each time |
 | **Checkpointing** — "use Git branches as natural checkpoints" | Feature branches + `/rewind` make wrong directions cheap |
 | **Human oversight** — "Maintain final review authority for all merged code" | You approve plans, commits, and merges |
-| **Start with mock data** | Dashboard frontend ships against the existing mock fixture before any backend work |
+| **Start with mock data** | Mock fixtures power unit tests before real endpoints exist; the groomed US3 cards wire the real endpoint from the start |
 | **The 70% problem** | AI gets you 70% fast; the last 30% (integration, security, edge cases) is where the gates below earn their keep |
 
 ### Changed by the audit (the two systemic findings)
@@ -43,107 +45,17 @@ v2 also got ~13 repo facts wrong (paths, commands, spec claims — full table in
 
 ## Part 1 — Phase 0: Cleanup task zero
 
-Do this **before** any harness setup or new feature code. (Generating design screens in Claude Design — Part 2.1 — is the one thing you can safely do in parallel; it never touches the code.) Steps 0.1–0.2 are hand edits (10–20 minutes total). Steps 0.3–0.5 are Claude Code sessions run in this exact order: **T048 first** (so the new lint rules and CI guard the next two fixes), then **T046** (the critical backend blocker), then **T047**.
+Do this **before** any harness setup or new feature code. (Generating design screens in Claude Design — Part 2.1 — is the one thing you can safely do in parallel; it never touches the code.) Steps 0.1–0.2 are complete (status pointers below). Steps 0.3–0.5 are Claude Code sessions run in this exact order: **T048 first** (so the new lint rules and CI guard the next two fixes), then **T046** (the critical backend blocker), then **T047**.
 
 > **Note on steps 0.3–0.5:** the harness (Part 3) doesn't exist yet, so for these three sessions you run the gates yourself: after Claude finishes, run `npm run verify && npm run build` in your terminal, read the diff (`git diff`), and commit manually with a `type: description` message on a feature branch. This is the last time you'll do it by hand.
 
 ### Step 0.1 — Sync tasks.md with reality *(by hand)*
 
-> **Status: ✅ done 2026-07-13.** Checkboxes, T046–T048 cards, and the dark-mode spec fix merged in PR #1; the remaining format fixes (T007 `.jsx`, template DoD, Quality Gate line, stale T032/T033 refs) applied right after. Kept below for reference and as the pattern for future syncs.
-
-**Instruction:** Open `specs/000-planning-phase/tasks.md` and make these edits:
-
-1. Check off two tasks that are already done (verified by the audit — the code exists and passes):
-   - `T026A` (useProfile hook tests) — change `[ ]` to `[x]`
-   - `T044` (verify npm script) — change `[ ]` to `[x]`
-2. Paste the three new task cards below at the end of the **Phase 4 (US2)** section for T046, and into the **Final Phase: Polish** section for T047 and T048:
-
-```markdown
-- [ ] T046 [US2] Register profile Lambdas + API Gateway routes and deploy
-  - Files: `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`,
-    `amplify/backend/function/getProfile/*`, `amplify/backend/function/updateProfile/*`
-  - Notes: Register getProfile/updateProfile with Amplify; add GET/POST /profile with Cognito
-    authorizer; decide nutripilotFunction's fate (implement as router or remove); amplify push.
-  - Tests: existing `tests/lambdas/*.test.js` still pass; manual smoke per docs/manual_testing/profile-onboarding.md
-  - Acceptance: GET and POST /profile return live 200s with the DTO shape from a signed-in session;
-    settings screen round-trips against real AWS; US2 Independent Test executed and passing.
-  - DoD: `npm run verify`; smoke test evidence noted in the manual test doc.
-
-- [ ] T047 Fix user-facing error messages in auth + profile forms
-  - Files: `src/components/auth/LoginForm.jsx`, `src/components/auth/RegisterForm.jsx`,
-    `src/components/profile/ProfileForm.jsx`
-  - Notes: Map known Cognito error codes (UserNotConfirmedException, UsernameExistsException,
-    NotAuthorizedException) to specific friendly messages; generic fallback otherwise; never render
-    raw error.message (constitution "Error Messages").
-  - Tests: extend LoginForm/RegisterForm/ProfileForm tests with one case per mapped code + fallback
-  - Acceptance: network failure no longer shows "Email already registered"; unconfirmed user is told
-    to confirm; no raw Amplify/backend message reaches the UI.
-  - DoD: `npm run verify`.
-
-- [ ] T048 [P] Enforcement gaps: lint rules + CI
-  - Files: `eslint.config.js`, `.eslintrc.js` (delete), `.github/workflows/ci.yml` (new)
-  - Notes: add max-lines-per-function:50 and max-depth:3 per constitution; CI runs
-    `npm run verify && npm run build` on push/PR.
-  - Tests: N/A (config)
-  - Acceptance: lint fails on a 51-line function; CI visible and green on the PR.
-  - DoD: `npm run verify`.
-```
-
-3. Apply the format fixes from audit section 4.3:
-   - In "Dependencies & Execution Order" and "Parallel Execution Opportunities", remove the references to `T032`/`T033` (they were folded into T027–T031 per the US3 note).
-   - In T007, change `src/index.js` to `src/index.jsx` (the actual file name).
-   - In the Task Card Template's DoD line, replace ``Tests pass; `npm run lint`; `npm run format:check`.`` with ``` `npm run verify` passes. ``` (T044 exists now — one command is the whole gate).
-   - Add one line to the "User Story Quality Gate" checklist: `- [ ] Independent Test executed against the dev environment and passed.`
-
-**Reason:** tasks.md is the source of truth for what the agent works on. The audit found it stale in both directions — two finished tasks unchecked, and (worse) no task category for infrastructure at all, which is the root cause of the unwired backend. These edits make the file truthful and give it the missing task type.
-
-**Verify:** `git diff specs/000-planning-phase/tasks.md` shows exactly these changes and nothing else. `grep -c "T046\|T047\|T048" specs/000-planning-phase/tasks.md` returns at least 3.
+> **Status: ✅ done 2026-07-13** — PR #1 plus follow-up commits. Checked off T026A/T044; added the T046–T048 task cards (they live in tasks.md, which is authoritative — T046 has since been enriched there and is the template card Part 4.3 teaches from); applied the audit 4.3 format fixes (T007 `.jsx`, template DoD → `npm run verify`, the Quality Gate "Independent Test executed" line, removed stale T032/T033 refs). Pattern for future syncs: tasks.md is edited by hand or by `/groom`, gated by `git diff`.
 
 ### Step 0.2 — Archive the Codex-era leftovers *(by hand)*
 
-> **Status: ✅ done 2026-07-13** — commit `93b1960`, merged in PR #1. One deviation from the text below, in your favor: `AGENTS.md` was rewritten directly with the **Part 8.1 shared version** (with the pre-T046 "Known state") instead of the short pointer, since the dual-tool setup is planned. So step 3.1 only needs the slim importing `CLAUDE.md`; AGENTS.md is already in its final shape.
-
-**Instruction:** These are the REAL leftover files, confirmed by a full scan of every tracked .md file on 2026-07-13 (v2 told you to archive `00-MASTER-GUIDE.md`, which does not exist; `docs/agentic-workflow-v2.md` is already deleted). In your terminal, from the repo root:
-
-```bash
-mkdir -p docs/archive
-git mv .codex docs/archive/codex
-git mv scripts/prompts docs/archive/codex-prompt-scripts
-git mv docs/ai-assisted-development-workflow.md docs/archive/
-git mv .github/copilot-instructions.md docs/archive/
-git mv .github/prompts docs/archive/github-prompts
-git mv docs/ai-prompts docs/archive/ai-prompts
-git mv docs/architecture docs/archive/architecture
-git mv .specify/templates docs/archive/specify-templates
-git mv .specify/specs docs/archive/specify-specs
-```
-
-What each of the five newly-listed items is and why it goes: `.github/prompts/` (3 files) and `.specify/templates/` (5 files) are spec-kit *regeneration* machinery — Part 2.0 explicitly drops that; `docs/ai-prompts/` (5 files) is the old prompt-courier system, superseded by the reusable prompts in Part 7 and the skills in Part 3; `docs/architecture/us2-...md` describes the US2 backend as a working end-to-end flow, which the audit disproved — stale architecture notes are *misinformation* to an agent; `.specify/specs/` is a 4-line placeholder for generated artifacts that will never be generated. **Do NOT touch** `.specify/memory/constitution.md` (quality standards — still the source of truth) or `docs/manual_testing/` (live test evidence, used by every Demo Gate).
-
-Then two file edits:
-
-1. In `package.json`, delete these two lines from `"scripts"` (their script files just moved):
-
-```json
-    "prompt:task": "node scripts/prompts/generate_task_prompt.js",
-    "prompt:review": "node scripts/prompts/generate_review_prompt.js",
-```
-
-2. Replace the entire content of `AGENTS.md` with the pointer below — **or**, if you are adopting the dual-tool setup (Part 8), skip this and use Part 8.1's full shared AGENTS.md instead:
-
-```markdown
-# Repository Guidelines
-
-This project is developed with Claude Code. All standing instructions live in `CLAUDE.md`
-(repo root). Quality standards: `.specify/memory/constitution.md`. Backlog: `specs/000-planning-phase/tasks.md`.
-The previous Codex/Copilot workflow is archived under `docs/archive/`.
-```
-
-Commit the lot: `git add -A && git commit -m "chore: archive Codex-era workflow files and sync tasks.md"`
-
-**Reason:** old agent instructions that stay in the repo leak into context — an agent that stumbles on `.codex/config.yml` or the Copilot instructions can follow dead rules (that config even points at file paths that don't exist). Archiving, not deleting, keeps the history readable.
-
-**Verify:** `npm run verify` still passes (proves removing the scripts broke nothing). `ls .codex 2>/dev/null` prints an error (it's gone). `git status` is clean after the commit.
+> **Status: ✅ done 2026-07-13** — commit `93b1960`, merged in PR #1. Moved `.codex`, `scripts/prompts`, `docs/ai-assisted-development-workflow.md`, `.github/copilot-instructions.md`, `.github/prompts`, `docs/ai-prompts`, `docs/architecture`, `.specify/templates`, and `.specify/specs` into `docs/archive/`; pruned the two `prompt:*` npm scripts. One deviation, in your favor: `AGENTS.md` was rewritten directly with the **Part 8.1 shared version** (with the pre-T046 "Known state") instead of the short pointer originally specified here — so step 3.1 only needs the slim importing `CLAUDE.md`; AGENTS.md is already in its final shape. Deliberately untouched: `.specify/memory/constitution.md` (quality source of truth) and `docs/manual_testing/` (live test evidence, used by every Demo Gate).
 
 ### Step 0.3 — T048: lint rules + CI *(Claude Code session #1)*
 
@@ -255,7 +167,9 @@ Generate Settings too, even though that screen already exists in the app — com
 
 > Read spec.md. Add requirement IDs, changing no wording: (1) for each screen section — Dashboard, Log Meal modal, Settings — prefix each item under Layout, States, and Interactions with an ID: DASH-01, DASH-02… / MEAL-01… / SET-01…; (2) give each of the seven API endpoint sections an ID: API-01 through API-07. Then produce a coverage table (in your reply, not in a file): every ID → the tasks.md task(s) that implement it, or "NO TASK". Do not modify tasks.md.
 
-Review the diff (it should be pure insertions), commit: `docs: add requirement IDs to spec.md`. Keep the coverage table from the reply — paste it into `docs/design/screens/NOTES.md` under a "Coverage" heading; the Kickoff will re-derive it, but you'll want to see the two match.
+One wording exception rides along in this session (decided 2026-07-19): spec.md's endpoint headings say `/api/profile`, `/api/dashboard`, etc., but the shipped convention — `src/api/*.js` and `contracts/openapi.yaml` — is unprefixed (`/profile`, `/dashboard`, `/meals`). While numbering the seven endpoint sections, correct their paths to the unprefixed shape in the same diff, so the spec matches the deployed path convention.
+
+Review the diff (pure insertions plus the path-prefix corrections), commit: `docs: add requirement IDs to spec.md`. Keep the coverage table from the reply — paste it into `docs/design/screens/NOTES.md` under a "Coverage" heading; the Kickoff will re-derive it, but you'll want to see the two match.
 
 **Reason:** IDs turn "is everything covered?" from an afternoon of cross-reading into a mechanical lookup any agent can do — and they give the change process (2.6) a stable handle: "change DASH-04" is unambiguous forever, "change the progress bars thing" is not.
 
@@ -273,7 +187,9 @@ This is the step that replaces micromanagement. Before any story starts, one ses
 > 3. Contradictions — inside spec.md, or between spec.md and the design screens.
 > 4. Missing mandatory categories. Every story must contain all six: UI states / frontend logic / backend handler / infrastructure+wiring+deploy / tests / Demo Gate.
 > 5. Decisions only I can make — each as a plain-language question with 2–3 options and your recommendation.
-> Then propose the corrected US3 task block: full Task Card format (Part 4.3), backend cards shaped like T046, Demo Gate last, new tasks numbered from T049. Wait for my approval before touching tasks.md.
+> Then propose the corrected US3 task block: full Task Card format (Part 4.3), backend cards shaped like T046, Demo Gate last, new tasks numbered from the next free task ID (verify against tasks.md — T051 as of 2026-07-19; T049 and T050 are taken by backlog items). Wait for my approval before touching tasks.md.
+
+> **US3 status annotation (2026-07-19):** the US3 block was already brought to full self-contained cards by `/groom` (commit `cc902bc`) — T027 is now T046-shaped, carrying its own Amplify registration, route, deploy, and live smoke test, so a run of this Kickoff must not redo the breakdown. For US3, the Kickoff is **reduced to adding what grooming didn't**: (1) the Demo Gate card, (2) the data-seeding task — numbered from the next free ID, which is **T051**, not T049 (T049 = Nutritionist Analysis backlog, T050 = TopNav backlog), and (3) the requirement-ID coverage check (which itself waits on 2.2 — spec.md has no requirement IDs yet). In the answer key below, the wiring-task and self-contained-card items are already resolved by the groom; the Demo Gate, seeding, and coverage items are still open. The screen prerequisite also still applies: `docs/design/screens/` does not exist yet, so 2.1 must run before this Kickoff. This is the general boundary between Kickoff and `/groom` — defined in Part 4.0.
 
 **Reason:** every gap caught here costs one line in a task card; the same gap caught after implementation costs a rework session, and caught after "story complete" it costs an audit. US2 is the proof — its missing wiring task was invisible for months precisely because no step ever compared the three altitudes.
 
@@ -286,7 +202,7 @@ This is the step that replaces micromanagement. Before any story starts, one ses
 - **No Demo Gate**: the Independent Test exists as prose, with no checkbox that forces its execution.
 - **Delete-meal from the dashboard** belongs to US4 (T042) — fine, but the US3 Demo Gate must not require it.
 
-**The decisions it should put to you** (recommendations included so you can calibrate its advice): Nutritionist Analysis → defer to Phase 2 (add to spec.md's Out of Scope list; it needs AI work that belongs with US4's OpenAI plumbing) or spec a rule-based version now — deferring is the lean call. Pull-to-refresh → a visible refresh affordance for MVP (pull gestures are native-app territory); one-line spec edit. Seeding → one small dev-only script task (T049) so the Independent Test can run before US4 exists.
+**The decisions it should put to you** (recommendations included so you can calibrate its advice): Nutritionist Analysis → defer to Phase 2 (add to spec.md's Out of Scope list; it needs AI work that belongs with US4's OpenAI plumbing) or spec a rule-based version now — deferring is the lean call. Pull-to-refresh → a visible refresh affordance for MVP (pull gestures are native-app territory); one-line spec edit. Seeding → one small dev-only script task (T051 — the next free ID; T049/T050 are taken) so the Independent Test can run before US4 exists.
 
 ### 2.4 Step 4 — Approve the corrected story block
 
@@ -301,10 +217,10 @@ This is the step that replaces micromanagement. Before any story starts, one ses
 Then approve. The agent applies the block to tasks.md, applies any spec.md edits your decisions require (e.g. moving Nutritionist Analysis to Out of Scope), and commits both in one commit: `docs: US3 kickoff — corrected story block + spec decisions`. The Demo Gate card it writes should look like this (this is the shape to expect, with your real task numbers):
 
 ```markdown
-- [ ] T050 [US3] Demo Gate: Independent Test + design match
-  - Files: `docs/manual_testing/dashboard.md` (new)
+- [ ] T052 [US3] Demo Gate: Independent Test + design match
+  - Files: `docs/manual_testing/dashboard-insights.md`
   - Notes: run only after every other US3 task is checked; requires the dashboard endpoint
-    deployed (T027). Seed meals via the T049 script first.
+    deployed (T027). Seed meals via the T051 script first.
   - Tests: manual, plus /verify-ui screenshots of /dashboard (populated AND empty states).
   - Acceptance: US3 Independent Test executed against the dev environment and passing;
     /verify-ui screenshots match docs/design/screens/dashboard.png and dashboard-empty.png
@@ -318,7 +234,7 @@ Then approve. The agent applies the block to tasks.md, applies any spec.md edits
 
 ### 2.5 Step 5 — Execute the story, then run the Demo Gate
 
-**Instruction:** Prerequisite check first: the harness (Part 3) must be fully set up before the block's first task starts — this is the only step of the specification flow that depends on it. Each task in the approved block then runs through the Part 4 ritual — one task, one session, one branch, `/ship`, PR, merge. Nothing new to learn; the kickoff changed *what's* in the cards, not how they run. Keep the story order: frontend-on-mock first, backend wiring second, integration swap third (Part 6).
+**Instruction:** Prerequisite check first: the harness (Part 3) must be fully set up before the block's first task starts — this is the only step of the specification flow that depends on it. Each task in the approved block then runs through the Part 4 ritual — one task, one session, one branch, `/ship`, PR, merge. Nothing new to learn; the kickoff changed *what's* in the cards, not how they run. Keep the story order from Part 6: the self-contained backend card first (or in parallel with the frontend chain), then the frontend chain per the Dependencies section of tasks.md — there is no fixture-to-API swap step.
 
 When every card except the Demo Gate is checked, run the gate — this is **your** session, ~20 minutes:
 
@@ -396,76 +312,34 @@ When US4's Demo Gate is checked, the MVP loop from spec.md is complete end to en
 
 ## Part 3 — Harness setup, corrected for this repo
 
-One step per sitting. After Part 3 is done, you never run gates by hand again.
+All of 3.1–3.6 may be created in a single session — every file below is fully specified, so there is nothing to design — and the Part 7 dry-run is the acceptance test for the lot; the per-step Verify lines then become optional spot-checks, not required rituals. (3.7's CI file arrives via T048 on its own track.) After Part 3 is done, you never run gates by hand again.
 
 Vocabulary for this part: **frontmatter** is a small block of `key: value` settings between two `---` lines at the top of a Markdown file — tools read it as configuration; **YAML** is the format those key/value lines are written in; a **matcher** is a pattern that says which events a rule applies to (e.g. "when the Edit or Write tool runs"); **stdin** ("standard input") is the pipe through which one program feeds data into another; a **subagent** is a separate Claude instance with its own context window and its own restricted tool list; a **skill** is a reusable instruction file you invoke as a slash-command (like `/ship`); a **hook** is a script Claude Code runs automatically at lifecycle events — no AI judgment involved.
 
 ### Step 3.1 — Create CLAUDE.md
 
-> **Dual-tool note:** if you plan to run both Claude Code and Codex (Part 8), use Part 8.1's split layout instead — same content, but the shared facts live in `AGENTS.md` and `CLAUDE.md` imports them. Either way, do this step now; converting later is a 5-minute cut-and-paste.
-
-**Instruction:** Create `CLAUDE.md` at the repo root with exactly this content (it is the audit's corrected draft — every path and command verified):
+**Instruction:** The shared facts file already exists — step 0.2 shipped `AGENTS.md` in its final Part 8.1 shape (with the pre-T046 "Known state"), so this step is only the slim Claude-side file. Create `CLAUDE.md` at the repo root with exactly this content (`@AGENTS.md` is Claude Code's import syntax — the referenced file's content is loaded as if pasted here):
 
 ```markdown
-# NutriPilot
+See @AGENTS.md for all project facts, commands, paths, design-system and quality rules,
+and the tool-neutral workflow rules. Everything there applies.
 
-Nutrition tracking app: macro tracking (protein/carbs/fats/calories) for muscle building.
-Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Node 18, DynamoDB single-table).
-
-## Commands
-- Dev server: `npm run dev` (Vite, http://localhost:5173, auto-opens a browser tab)
-- Full quality gate: `npm run verify` (lint + prettier check + tests with coverage) — use this, not the pieces
-- Individual: `npm run lint` / `npm run test:coverage` / `npm run build`
-- Plain `npm test` does NOT check coverage — never use it to claim the coverage gate passed
-
-## Key paths
-- Screens: `src/components/auth/` (login/register), `src/components/profile/ProfileForm.jsx` (settings)
-- Routing/shell: `src/components/App.jsx`; session: `src/context/SessionContext.jsx`
-- API client: `src/api/client.js` (signed Amplify requests); wrappers in `src/api/*.js`
-- Lambdas: `amplify/backend/function/` (shared code in `function/lib/`)
-- Tests mirror src under `tests/`; fixtures in `tests/fixtures/` (dashboard + meals mocks already exist)
-- Spec: `spec.md` (root). Quality rules: `.specify/memory/constitution.md`. Plan: `specs/000-planning-phase/plan.md`
-- Backlog SOURCE OF TRUTH: `specs/000-planning-phase/tasks.md` — work only on assigned tasks;
-  unchecked tasks are not implemented yet; mark `[x]` (and only then) when a task's DoD is met
-
-## Design system — SOURCE OF TRUTH
-- Tokens + component contracts: `docs/design/DESIGN.md` and `docs/design/tokens/*.css`
-  (reference docs — the shipped styles are the `.auth-*` / `.profile-*` classes in `src/index.css`)
-- The app is DARK MODE ONLY (spec.md "Out of Scope": light mode is Phase 2)
-- Ignore the light-theme palette in `tailwind.config.cjs` — it is unused legacy config
-- No ad-hoc colors or spacing: use the tokens/classes above. No icons or emoji in UI text.
-- If a screen, state, or component is not defined in DESIGN.md or spec.md: STOP and flag it. Never invent UI.
-
-## Quality rules (from .specify/memory/constitution.md)
-- Functions ≤ 50 lines, cyclomatic complexity ≤ 10, nesting ≤ 3 (all ESLint-enforced)
-- Coverage ≥ 80% (branches ≥ 75%), AAA pattern, independent tests
-- Naming: camelCase vars, verbNoun functions, is/has/should/can booleans, ALL_CAPS constants, JSDoc on public functions
-- Validate input at UI boundary AND in Lambdas; users see generic error messages (never raw error.message); no secrets in code
-- Commits: `type: description` (feat/fix/docs/test/refactor/chore)
-
-## Known state (update this section when it changes)
-- T046 wired getProfile/updateProfile to API Gateway with the Cognito authorizer — copy that
-  pattern for every new Lambda. A backend task is NOT done until the real endpoint answers.
-- `calculateMacros` is duplicated in `src/utils/` and `amplify/backend/function/lib/` — change both or neither.
-- CI (.github/workflows/ci.yml) runs `npm run verify && npm run build` on every push/PR.
-
-## Workflow rules
+## Claude Code-specific workflow
 - Always start non-trivial work in Plan Mode; wait for my approval
 - After implementing UI, verify visually with /verify-ui before declaring done
-- Ship via the /ship skill only: it runs the gate, review, tasks.md update, then commits to the
-  current feature branch and opens/updates a PR — never push directly to main
-- If requirements are ambiguous, ask — do not guess
+- Ship via the /ship skill only — it enforces the gate, review, tasks.md update,
+  and the feature-branch + PR flow
 ```
 
-> If you write this file **before** finishing T046, temporarily replace the first "Known state" bullet with: *"Deployed API has ONE route: /api → nutripilotFunction (boilerplate echo). getProfile/updateProfile are NOT registered and /profile is NOT a real route yet — T046 fixes this."* Swap it for the line above when T046 ships. CLAUDE.md must describe reality, never aspiration.
+> **The monolithic single-file CLAUDE.md this step used to specify is retired** (superseded 2026-07-19): its full content lives in Part 8.1's `AGENTS.md` template, which is already committed as `AGENTS.md`. Never maintain two copies of the shared facts — a second copy is exactly the drift this document exists to prevent. The "describe reality, never aspiration" rule now lives with the template in 8.1 (the pre-T046 caveat there).
 
-**Reason:** CLAUDE.md is loaded at every session start and survives context compaction — it's the one instruction layer the agent can't forget. This is *context engineering*: everything you used to retype per prompt lives here once. It's lean on purpose: every line costs context in every session.
+**Reason:** CLAUDE.md is loaded at every session start and survives context compaction — it's the one instruction layer the agent can't forget. This is *context engineering*: everything you used to retype per prompt lives here once, via the AGENTS.md import. It's lean on purpose: every line costs context in every session.
 
-**Verify:** Start a fresh Claude Code session and ask: *"What command proves the coverage gate passed, and where is the backlog source of truth?"* It should answer `npm run verify` (or `test:coverage`) and `specs/000-planning-phase/tasks.md` without reading other files.
+**Verify:** Start a fresh Claude Code session and ask: *"What command proves the coverage gate passed, and where is the backlog source of truth?"* It should answer `npm run verify` (or `test:coverage`) and `specs/000-planning-phase/tasks.md` without reading other files — that proves the import works.
 
 ### Step 3.2 — Permissions in .claude/settings.json
 
-**Instruction:** Create `.claude/settings.json` (create the `.claude/` folder if needed) with this content — the `hooks` section is explained in Step 2.3 but included here so you paste the file once:
+**Instruction:** Create `.claude/settings.json` (create the `.claude/` folder if needed) with this content — the `hooks` section is explained in Step 3.3 but included here so you paste the file once:
 
 ```json
 {
@@ -518,7 +392,7 @@ How the rules work: `Bash(npm run verify)` allows that exact command; a trailing
 
 ### Step 3.3 — The PostToolUse lint hook
 
-**Instruction:** The `hooks` block is already in your settings.json from Step 2.2. Now create the script it points at. First check you have `jq` (a small command-line JSON reader the script uses): run `which jq` — if it prints nothing, install it with `brew install jq`.
+**Instruction:** The `hooks` block is already in your settings.json from Step 3.2. Now create the script it points at. First check you have `jq` (a small command-line JSON reader the script uses): run `which jq` — if it prints nothing, install it with `brew install jq`.
 
 Create `.claude/hooks/lint-changed.sh`:
 
@@ -612,7 +486,7 @@ The frontmatter's `tools: Read, Grep, Glob, Bash` restricts the subagent to insp
 
 **Reason:** this restores the two-perspective validation you liked about v1 — with the handoff automatic instead of you couriering diffs. Criteria 5 and 6 are new in v3 and exist because of the audit: they are the checks that would have caught "US2 complete but /profile doesn't exist" months earlier.
 
-**Verify:** After any small change, say: *"Have the code-reviewer agent review these changes."* You get a structured verdict with the six area notes. (If Claude can't find the subagent, restart the session — a brand-new `.claude/agents/` directory is only detected at session start.)
+**Verify:** After any small change, say: *"Have the code-reviewer agent review these changes."* You get a structured verdict with the seven area notes. (If Claude can't find the subagent, restart the session — a brand-new `.claude/agents/` directory is only detected at session start.)
 
 ### Step 3.5 — The /ship skill
 
@@ -664,23 +538,33 @@ Ship the current work. Follow ALL steps in order. STOP and report if any step fa
    task(s) this work implements, and only if every DoD line is genuinely met. If a DoD
    line is NOT met (e.g. a backend task with no real-endpoint smoke evidence), do not
    check the box; report the gap instead.
-6. Show the user: summary of changed files + the tasks.md checkbox change + a proposed
-   commit message (format: `type: description`, then a short bullet list).
-7. WAIT for explicit user approval. Do not proceed without it.
-8. On approval: `git add` the relevant files, commit, and push the current feature
-   branch (`git push -u origin <branch>`). Then open a pull request with
+6. Housekeeping — apply each check that fires, in the same commit as the work:
+   a. If any file under `.claude/` changed: update `docs/HARNESS.md` to match (its
+      maintenance rule — the harness one-pager must never lag the harness).
+   b. If the work fixes a pitfall recorded in AGENTS.md "Known state": update or
+      remove that entry (a stale pitfall is worse than none).
+   c. If the task card carries a `Progress:` line: remove it — the task is done.
+   d. If the work completes an item on the docs/agentic-workflow-v3.md Part 7
+      checklist: tick it.
+7. Show the user: summary of changed files + the tasks.md checkbox change + any
+   housekeeping edits from step 6 + a proposed commit message (format:
+   `type: description`, then a short bullet list).
+8. WAIT for explicit user approval. Do not proceed without it.
+9. On approval: `git add` each changed file by explicit path — never `git add .` or
+   `git add -A` — commit, and push the current feature branch
+   (`git push -u origin <branch>`). Then open a pull request with
    `gh pr create --fill` — or, if a PR already exists for this branch, just push
    (the PR updates automatically). If the push prompts for a passphrase or fails
    with "Permission denied (publickey)", or `gh pr create` fails with a permissions
    error: STOP and tell the user to complete the one-time push setup documented
    at the top of step 3.5. Do not retry or try to work around authentication.
-9. Report the PR URL and remind the user to check CI (`gh run watch` or the GitHub
-   Actions tab).
+10. Report the PR URL and remind the user to check CI (`gh run watch` or the GitHub
+    Actions tab).
 ```
 
 Commit the file. You invoke it by typing `/ship`. The `disable-model-invocation: true` line means only *you* can trigger it — Claude will never decide to ship on its own.
 
-**Reason:** the whole end-of-task ritual becomes one command, with you as the sole approval gate for what enters the repo (step 7) and for the merge itself (the PR — a **pull request** is GitHub's "proposed change" page where CI runs and you press Merge). Three corrections vs v2: one `verify` command instead of three (audit #2/#3), feature branch + PR instead of pushing main (audit #9 — pushing main directly contradicted both the constitution and your actual practice), and the tasks.md checkbox update is now step 5 of shipping instead of a thing you remember (audit finding: T026A/T044 sat unchecked because remembering doesn't scale).
+**Reason:** the whole end-of-task ritual becomes one command, with you as the sole approval gate for what enters the repo (step 8) and for the merge itself (the PR — a **pull request** is GitHub's "proposed change" page where CI runs and you press Merge). Three corrections vs v2: one `verify` command instead of three (audit #2/#3), feature branch + PR instead of pushing main (audit #9 — pushing main directly contradicted both the constitution and your actual practice), and the tasks.md checkbox update is now step 5 of shipping instead of a thing you remember (audit finding: T026A/T044 sat unchecked because remembering doesn't scale).
 
 **Verify:** Make a trivial change on a branch (fix a typo), run `/ship`, and watch: gate → build → review verdict → tasks.md check → summary → it pauses for your approval → commit → push → PR URL.
 
@@ -713,6 +597,9 @@ already running. Note: the dev server auto-opens a browser tab on the user's mac
 2. Compare against docs/design/DESIGN.md and docs/design/tokens/*.css: dark mode only
    (#0b0f14 background family), Sora typeface, mint→emerald accent gradient, the fixed
    macro colors, 16px/24px radii, glassmorphic card treatment, no icons or emoji.
+   If docs/design/screens/<screen>.png exists, also compare the screenshot against it —
+   layout, states, and tokens; the design screen is a contract, not a bitmap, so no
+   pixel-diffing.
 3. Exercise the flow: fill forms with valid AND invalid input; walk the happy path and
    every error path the task card / spec.md defines; check loading, empty, error, and
    populated states.
@@ -776,6 +663,8 @@ So each arrow gets a guard:
 | screen → spec.md + DESIGN.md | `/design-spec-sync` (skill) |
 | spec.md + DESIGN.md → tasks.md | `/groom` (skill) |
 | tasks.md → code | the per-task ritual (4.2) + the code-reviewer |
+
+**Story Kickoff vs `/groom` — the boundary.** Two different stations touch tasks.md, and they must not blur: **Story Kickoff (2.3) creates a story's block, once** — the full breakdown against spec + design screen, the Demo Gate card, the seed/data task, and the requirement-ID coverage check (requirements with no covering task, and vice versa). **`/groom` maintains an existing block** after spec.md or DESIGN.md change: it re-aligns cards with the current docs and upgrades them to the full card format, but it does not invent the story-level infrastructure a Kickoff owns. First time a story is scheduled: Kickoff. Every doc change after: `/design-spec-sync` (if a screen moved), then `/groom`. When the two overlap — a story got groomed before its Kickoff ran, as happened with US3 — the Kickoff shrinks to exactly the pieces grooming doesn't produce (see the US3 annotation in 2.3).
 
 **The per-screen ritual.** Every screen — new or changed — goes through these six steps, in order:
 
@@ -861,7 +750,7 @@ The audit's root-cause finding: the unwired backend wasn't an agent failure, it 
 5. **Checkboxes are updated by `/ship` (step 5), never from memory.**
 6. **Task cards live inside story blocks, and story blocks are produced by a Story Kickoff** (Part 2.3) — you don't hand-write task lists anymore; the agent proposes the breakdown against spec + design screen, and you approve it at story altitude with the Part 2.4 checklist. Every story block ends with a Demo Gate.
 
-**Worked example — T046 is the template.** Look at its card (Part 1, step 0.1): Files names the *config* files, not just source; Notes says what "wired" means (authorizer, push) and forces the nutripilotFunction decision; Acceptance demands live 200s and the executed Independent Test; DoD demands recorded smoke evidence. When you write T027 (`getDashboard`), copy this shape:
+**Worked example — T046 is the template.** Look at its card in tasks.md (Phase 4, US2): Files names the *config* files, not just source; Notes says what "wired" means (authorizer, push) and forces the nutripilotFunction decision; Acceptance demands live 200s and the executed Independent Test; DoD demands recorded smoke evidence. When you write T027 (`getDashboard`), copy this shape:
 
 ```markdown
 - [ ] T027 [P] [US3] Implement getDashboard Lambda, register it, route it, and deploy
@@ -875,6 +764,8 @@ The audit's root-cause finding: the unwired backend wasn't an agent failure, it 
     returns a live 200 with the DTO shape from a signed-in session.
   - DoD: `npm run verify`; smoke evidence noted in docs/manual_testing/.
 ```
+
+> This example has since been superseded by the real groomed T027 card in tasks.md, which is richer and **authoritative** — read that one, not this. Note also the path convention it uses: routes are unprefixed (`/dashboard`, `/profile`) per `contracts/openapi.yaml` and the shipped `src/api/*` — spec.md's `/api/...` headings are corrected to match in the 2.2 session.
 
 ---
 
@@ -913,8 +804,8 @@ This is the whole journey, in one list — Parts 1→2→3 in reading order, the
 3. **Number the spec requirements** (Part 2.2) — one document-only session, once ever; gate it by hand like the Phase 0 sessions.
 4. **US3 Story Kickoff** (Part 2.3–2.4) — the gap report, your decisions, the corrected US3 block with wiring task and Demo Gate. Also document-only. No US3 code before this is approved.
 5. **Harness** (Part 3), then the dry-run task from the Part 7 checklist — set up now, because the next step is the first real implementation.
-6. **Dashboard frontend, mock data first** — the first real task through the full ritual. Prompt it against the *existing* mock: `tests/fixtures/dashboard.js` already contains a response shaped exactly like spec.md's `/api/dashboard` contract (the audit confirmed this — don't create a new mock). Bounded, unblocked by any backend work, and it exercises the design system end to end. Use the screen-task prompt in Part 7.
-7. **Dashboard backend (T027)** — copy T046's wiring pattern (the card in Part 4.3). Then swap the frontend from fixture to the real `src/api/dashboard.js` call — a small, separate task.
+6. **Dashboard backend (T027)** — self-contained and marked `[P]` in tasks.md: its groomed card carries its own Amplify registration, route, deploy, and live smoke test (the T046 wiring pattern), so it self-verifies without any frontend and can run before or in parallel with the frontend chain. Its one hard prerequisite is T046 landing first — T027 reuses the routing pattern T046 decides. Use the backend-task prompt in Part 7.
+7. **Dashboard frontend chain — T028 → T029 → T031, with T030 anytime before T031** (the Dependencies section of tasks.md is the authority on this order). The API helper (T028) targets the real `/dashboard` route from the start; `tests/fixtures/dashboard.js` feeds the *unit tests*, not the running app, and T031's card includes fixing that fixture's internal inconsistencies. Use the screen-task prompt in Part 7 for T031. *Note:* earlier drafts had a separate "swap the frontend from fixture to the real API" task here — the groomed self-contained cards made it obsolete. There is no swap task; don't add one.
 8. **US3 Demo Gate** (Part 2.5), outer review, merge — the story is now actually done, by the new definition of done.
 9. **Onward, story by story** — US4 via its own Kickoff (Part 2.8), then the Polish phase (T043, T045). Requirement changes along the way go through the Change Intake (Part 2.6), never through chat.
 
@@ -941,6 +832,8 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 ### Checklist (in order; Phase 0 first)
 
+> **This checklist is the single record of workflow progress; `/ship` ticks items here when work completes them.**
+
 - [x] 0.1 Sync tasks.md: check T026A/T044, paste T046–T048, format fixes — done 2026-07-13 (PR #1)
 - [x] 0.2 Archive all dead-workflow files (.codex, scripts/prompts, .github/prompts, docs/ai-prompts, docs/architecture, .specify/templates + specs, old workflow doc), prune `prompt:*` scripts, rewrite AGENTS.md — done 2026-07-13 (commit 93b1960, PR #1)
 - [ ] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
@@ -948,23 +841,27 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 - [ ] 0.5 T047: error messages — Claude session; open the cleanup PR; merge when CI is green
 - [ ] 2.1 Design screens generated in Claude Design + NOTES.md — parallel work, start anytime after 0.2
 - [ ] 2.2 Requirement IDs added to spec.md + coverage table — one session, manual gate
-- [ ] 2.3–2.4 US3 Story Kickoff: gap report graded against the answer key, decisions made, corrected block approved and committed
+- [x] 4.0 (partial, ran early) US3 cards groomed to full self-contained format via `/groom` — done 2026-07-18 (commit cc902bc); does **not** replace the US3 Kickoff below
+- [ ] 2.3–2.4 US3 Story Kickoff, reduced scope per the 2.3 annotation: Demo Gate card + seeding task (T051) + requirement-ID coverage check, approved and committed
 - [ ] 3.1 Create `CLAUDE.md` — 15 min
 - [ ] 3.2 Create `.claude/settings.json` (permissions + hooks block) — 10 min
 - [ ] 3.3 Install `jq` if needed; create + chmod `.claude/hooks/lint-changed.sh` — 10 min
 - [ ] 3.4 Create `.claude/agents/code-reviewer.md` — 10 min
 - [ ] 3.5 Create `.claude/skills/ship/SKILL.md` — 10 min
-- [ ] 3.5 prerequisite: one-time push setup (SSH key in Keychain + `gh auth switch` to personal) — 5 min
+- [ ] 3.5 prerequisite: one-time push setup (SSH key in Keychain + `gh auth switch` to personal) — 5 min (`gh auth switch` to `metjanbaduni` verified done 2026-07-19; Keychain half unverified)
 - [ ] 3.6 Add Playwright MCP; create `.claude/skills/verify-ui/SKILL.md` — 20 min
 - [ ] 3.7 Confirm `.github/workflows/ci.yml` exists (from 0.3) and is green
+- [x] 4.0 Create `/groom` + `/design-spec-sync` skills (`.claude/skills/groom/`, `.claude/skills/design-spec-sync/`) — done 2026-07-18 (commit 8baa492)
+- [x] 4.0 Create `docs/HARNESS.md` (harness one-pager; its maintenance rule feeds /ship housekeeping step 6a) — done 2026-07-18 (commit 8baa492)
+- [x] 4.1 Create `/retro` skill (`.claude/skills/retro/`) — done 2026-07-18 (commit 7f04298)
 - [ ] Dry run: one trivial change through the full ritual (branch → plan → implement → /verify-ui → /ship → CI → merge) — 30 min
-- [ ] First real task: Dashboard frontend against `tests/fixtures/dashboard.js` (first card of the approved US3 block)
+- [ ] First real task: first card of the approved US3 block per the Part 6 order (T027 backend, or T028 if starting the frontend chain)
 - [ ] 2.5 US3 Demo Gate executed and signed off — the workflow has now run end to end once
 
 ### Reusable prompts
 
 **Start a screen task (Plan Mode):**
-> Implement task T0NN from specs/000-planning-phase/tasks.md: the <SCREEN> screen. Follow docs/design/DESIGN.md and docs/design/tokens/*.css, matching the structural patterns of the existing auth and settings screens (but NOT their error-message handling — see CLAUDE.md quality rules). Use mock data from tests/fixtures/dashboard.js, shaped like spec.md's API response. Give me the simplest viable plan and list anything the design system or spec leaves undefined.
+> Implement task T0NN from specs/000-planning-phase/tasks.md: the <SCREEN> screen. Follow docs/design/DESIGN.md and docs/design/tokens/*.css, matching the structural patterns of the existing auth and settings screens (but NOT their error-message handling — see CLAUDE.md quality rules). Tests use tests/fixtures/dashboard.js (T031's card fixes its internal inconsistencies); the screen itself consumes its data hook — do not wire the fixture into app code. Give me the simplest viable plan and list anything the design system or spec leaves undefined.
 
 **Start a backend task (Plan Mode):**
 > Implement task T0NN from specs/000-planning-phase/tasks.md. Follow the T046 wiring pattern: handler source + mocked unit tests + Amplify registration + route behind the Cognito authorizer. Tell me exactly which interactive Amplify CLI commands I run myself and what to answer; do not run amplify push yourself. The task is not done until the live endpoint answers with the expected shape and the smoke evidence is recorded.
@@ -987,6 +884,8 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 ## Part 8 — Dual-harness operation: running the same workflow on Codex
 
+> **Status: deferred (2026-07-19).** Set this up the day you first hit a rate limit mid-story — nothing here blocks anything else, and unexercised machinery is where drift breeds. Two exceptions already live: 8.1's shared `AGENTS.md` shipped in step 0.2, and the slim importing `CLAUDE.md` is step 3.1's job. The Codex-side pieces (8.2–8.5 and the dual-tool checklist below) wait.
+
 **Why this part exists:** Claude Code has usage limits; when you hit them mid-week you don't want the workflow to stop. And you already know Codex produces good code here — the audit confirmed the Codex-era code passes the constitution almost everywhere; the failures were *process* gaps (missing wiring tasks, mock-only gates), not code quality. So the strategy is: make the **process** tool-agnostic, and give Codex a thin twin of the tool-specific layer.
 
 All Codex config below was verified against the official Codex documentation on 2026-07-11 (Codex now has lifecycle hooks with the same stdin-JSON design as Claude Code, and implements the same Agent Skills open standard — both are recent additions, which is why v2 never mentioned them).
@@ -1002,18 +901,18 @@ Most of this workflow is already tool-neutral. Know which layer you're touching:
 | CI | `.github/workflows/ci.yml` | any agent (it's the neutral referee) |
 | Branch + PR ritual, you merge | git + GitHub | any agent |
 | Design system + spec + constitution | `docs/design/`, `spec.md`, `.specify/memory/constitution.md` | any agent |
-| Standing instructions | `AGENTS.md` (shared) + `CLAUDE.md` (Claude extras) | both — see 7.1 |
-| Lint-on-edit hook | `.claude/` (Claude) + `.codex/` (Codex) | per-tool twin — see 7.3 |
-| Skills (/ship, /verify-ui) | `.claude/skills/`, shared via symlink | both — see 7.4 |
-| Reviewer | code-reviewer subagent (Claude) / built-in `/review` (Codex) | per-tool — see 7.5 |
+| Standing instructions | `AGENTS.md` (shared) + `CLAUDE.md` (Claude extras) | both — see 8.1 |
+| Lint-on-edit hook | `.claude/` (Claude) + `.codex/` (Codex) | per-tool twin — see 8.3 |
+| Skills (/ship, /verify-ui) | `.claude/skills/`, shared via symlink | both — see 8.4 |
+| Reviewer | code-reviewer subagent (Claude) / built-in `/review` (Codex) | per-tool — see 8.5 |
 
 The deterministic gates being tool-agnostic is the whole point: whichever model types the code, the same scripts, CI, and DoD decide whether it ships.
 
 ### 8.1 One instruction file for both tools
 
-**Instruction:** Restructure the standing instructions into two files (this supersedes the AGENTS.md pointer from step 0.2 and the monolithic CLAUDE.md from step 2.1).
+**Instruction:** The standing instructions are two files: the shared `AGENTS.md` below (already shipped in step 0.2, superseding the short pointer that step originally specified) and the slim importing `CLAUDE.md` (created in step 3.1). This section holds the authoritative template for both.
 
-`AGENTS.md` (repo root) — the shared file both tools read. It is your Part 3.1 CLAUDE.md with the Claude-specific workflow section replaced by tool-neutral rules:
+`AGENTS.md` (repo root) — the shared file both tools read:
 
 ```markdown
 # NutriPilot
@@ -1067,6 +966,8 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
 - If requirements are ambiguous, ask — do not guess
 ```
 
+> **Pre-T046 caveat (template vs reality):** the "Known state" block above is the *post-T046* target. Until T046 and T048 ship, the section must instead carry the pre-T046 reality — deployed API is the boilerplate echo (`/api` → nutripilotFunction), getProfile/updateProfile are NOT registered, `/profile` is not a real route, and no CI exists — which is exactly what the committed `AGENTS.md` says today. Swap to the block above only when T046/T048 land. Standing instructions describe reality, never aspiration.
+
 `CLAUDE.md` (repo root) — now three lines of import plus the Claude-only extras (`@AGENTS.md` is Claude Code's import syntax: the referenced file's content is loaded as if pasted here):
 
 ```markdown
@@ -1080,7 +981,7 @@ and the tool-neutral workflow rules. Everything there applies.
   and the feature-branch + PR flow
 ```
 
-Commit both.
+Commit both (`AGENTS.md` already is; `CLAUDE.md` lands with step 3.1).
 
 **Reason:** Codex reads `AGENTS.md` from the repo root natively (it's the open agents.md standard — Codex's `/init` even generates one); Claude Code reads `CLAUDE.md` and imports the shared file. One source of truth, zero drift between tools — the same *context engineering* principle, now tool-agnostic.
 
@@ -1182,7 +1083,7 @@ In Codex, invoke a skill by mentioning `$ship` / `$verify-ui`, or browse them wi
 
 ### 8.5 The reviewer on Codex
 
-Codex has no user-defined subagents, but it ships two review entry points: `/review` inside a session ("ask Codex to review your working tree") and the non-interactive `codex review` CLI command, which can review uncommitted changes or a branch diff against a base. These are the Codex-side replacements for the code-reviewer subagent — with one caveat: when Codex reviews code Codex just wrote, that's self-review, not independent review. The cross-review rules in 7.6 exist for exactly that reason.
+Codex has no user-defined subagents, but it ships two review entry points: `/review` inside a session ("ask Codex to review your working tree") and the non-interactive `codex review` CLI command, which can review uncommitted changes or a branch diff against a base. These are the Codex-side replacements for the code-reviewer subagent — with one caveat: when Codex reviews code Codex just wrote, that's self-review, not independent review. The cross-review rules in 8.6 exist for exactly that reason.
 
 ### 8.6 The best combination: who develops, who reviews
 

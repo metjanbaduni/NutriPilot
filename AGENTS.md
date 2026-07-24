@@ -66,6 +66,13 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   constitution — encoded as an ESLint override in eslint.config.js (T048). If a
   test file's describe() block trips other rules later, check for a matching
   constitution exception before tightening the rule.
+- `src/aws-exports.js` (Cognito/API config) is gitignored; `ci.yml` writes a stub
+  before `npm run build` so the app compiles without real AWS. The real file must
+  exist locally (from `amplify pull`/`amplify push`) for `npm run dev` and other
+  Amplify CLI commands to work.
+- `src/amplifyconfiguration.json` exists locally (gitignored) but no code imports
+  it — dead file left over from Amplify CLI. Safe to delete; small future cleanup
+  task, not fixed now.
 - The previous Codex/Copilot workflow (prompt scripts, spec-kit templates, per-story architecture
   docs) is archived under `docs/archive/` — do not follow anything in there.
 

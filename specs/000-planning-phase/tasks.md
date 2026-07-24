@@ -408,10 +408,16 @@ no longer exist.
     to confirm; no raw Amplify/backend message reaches the UI.
   - DoD: `npm run verify`.
 
-- [ ] T048 [P] Enforcement gaps: lint rules + CI
+- [x] T048 [P] Enforcement gaps: lint rules + CI
   - Files: `eslint.config.js`, `.eslintrc.js` (delete), `.github/workflows/ci.yml` (new)
   - Notes: add max-lines-per-function:50 and max-depth:3 per constitution; CI runs
     `npm run verify && npm run build` on push/PR.
+  - Notes addendum: Additional fixes discovered and applied during implementation:
+    - eslint.config.js base block had no `files` key — all .jsx files (8 src components,
+      6 test files) were silently unlinted. Fixed: added files: ['**/*.{js,jsx}'].
+    - Added test-file override for max-lines-per-function per constitution exception.
+    - Fixed 4 violations exposed once .jsx linting was enabled: LoginForm.jsx,
+      RegisterForm.jsx, ProfileForm.jsx (function length), AuthGate.jsx (line length).
   - Tests: N/A (config)
   - Acceptance: lint fails on a 51-line function; CI visible and green on the PR.
   - DoD: `npm run verify`.

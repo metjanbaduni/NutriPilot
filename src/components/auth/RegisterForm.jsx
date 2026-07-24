@@ -257,6 +257,56 @@ function createRegisterHandlers({
   };
 }
 
+function getShellCopy(isConfirmStep) {
+  return {
+    title: isConfirmStep ? 'Confirm your email' : 'Create your account',
+    subtitle: isConfirmStep
+      ? 'Enter the 6-digit code we sent to your inbox.'
+      : 'Start tracking macros with calm, minimal guidance.',
+    footer: isConfirmStep ? null : (
+      <p className="auth-meta">
+        Already have an account?{' '}
+        <a className="auth-link" href="/login">
+          Sign in
+        </a>
+      </p>
+    ),
+  };
+}
+
+function RegisterStepFields({
+  isConfirmStep,
+  code,
+  email,
+  password,
+  errorMessage,
+  isSubmitting,
+  handlers,
+}) {
+  if (isConfirmStep) {
+    return (
+      <ConfirmationFields
+        code={code}
+        errorMessage={errorMessage}
+        isSubmitting={isSubmitting}
+        onCodeChange={handlers.handleCodeChange}
+        onSubmit={handlers.handleConfirm}
+      />
+    );
+  }
+  return (
+    <RegisterFormFields
+      email={email}
+      password={password}
+      errorMessage={errorMessage}
+      isSubmitting={isSubmitting}
+      onEmailChange={handlers.handleEmailChange}
+      onPasswordChange={handlers.handlePasswordChange}
+      onSubmit={handlers.handleRegister}
+    />
+  );
+}
+
 /**
  * Renders the registration form with confirmation flow and Amplify auth integration.
  * @returns {JSX.Element}
@@ -286,45 +336,19 @@ export default function RegisterForm() {
   });
 
   const isConfirmStep = step === 'confirm';
+  const { title, subtitle, footer } = getShellCopy(isConfirmStep);
 
   return (
-    <AuthShell
-      title={isConfirmStep ? 'Confirm your email' : 'Create your account'}
-      subtitle={
-        isConfirmStep
-          ? 'Enter the 6-digit code we sent to your inbox.'
-          : 'Start tracking macros with calm, minimal guidance.'
-      }
-      footer={
-        isConfirmStep ? null : (
-          <p className="auth-meta">
-            Already have an account?{' '}
-            <a className="auth-link" href="/login">
-              Sign in
-            </a>
-          </p>
-        )
-      }
-    >
-      {isConfirmStep ? (
-        <ConfirmationFields
-          code={code}
-          errorMessage={errorMessage}
-          isSubmitting={isSubmitting}
-          onCodeChange={handlers.handleCodeChange}
-          onSubmit={handlers.handleConfirm}
-        />
-      ) : (
-        <RegisterFormFields
-          email={email}
-          password={password}
-          errorMessage={errorMessage}
-          isSubmitting={isSubmitting}
-          onEmailChange={handlers.handleEmailChange}
-          onPasswordChange={handlers.handlePasswordChange}
-          onSubmit={handlers.handleRegister}
-        />
-      )}
+    <AuthShell title={title} subtitle={subtitle} footer={footer}>
+      <RegisterStepFields
+        isConfirmStep={isConfirmStep}
+        code={code}
+        email={email}
+        password={password}
+        errorMessage={errorMessage}
+        isSubmitting={isSubmitting}
+        handlers={handlers}
+      />
     </AuthShell>
   );
 }

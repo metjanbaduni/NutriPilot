@@ -29,7 +29,9 @@ export function useAuthGate() {
 
 /**
  * Guards authenticated content and exposes auth actions to descendants.
- * @param {{ children: React.ReactNode | ((actions: { signOut: () => Promise<void> }) => React.ReactNode) }} props
+ * @param {{
+ *   children: React.ReactNode | ((actions: { signOut: () => Promise<void> }) => React.ReactNode)
+ * }} props
  * @returns {JSX.Element | null}
  */
 export default function AuthGate({ children }) {

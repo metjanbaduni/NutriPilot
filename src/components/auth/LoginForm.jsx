@@ -31,6 +31,43 @@ function getAuthErrorMessage() {
   return INVALID_CREDENTIALS_MESSAGE;
 }
 
+function createLoginSubmitHandler({
+  email,
+  password,
+  setAuthError,
+  setIsSubmitting,
+  setValidationError,
+}) {
+  return async (event) => {
+    event.preventDefault();
+    setAuthError('');
+
+    const trimmedEmail = email.trim();
+    const emailError = validateEmail(trimmedEmail);
+    if (emailError) {
+      setValidationError(emailError);
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setValidationError(passwordError);
+      return;
+    }
+
+    setValidationError('');
+    setIsSubmitting(true);
+
+    try {
+      await signIn({ username: trimmedEmail, password });
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+}
+
 function LoginFormFields({
   email,
   password,
@@ -99,34 +136,13 @@ export default function LoginForm() {
     setAuthError('');
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setAuthError('');
-
-    const trimmedEmail = email.trim();
-    const emailError = validateEmail(trimmedEmail);
-    if (emailError) {
-      setValidationError(emailError);
-      return;
-    }
-
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setValidationError(passwordError);
-      return;
-    }
-
-    setValidationError('');
-    setIsSubmitting(true);
-
-    try {
-      await signIn({ username: trimmedEmail, password });
-    } catch (error) {
-      setAuthError(getAuthErrorMessage(error));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleSubmit = createLoginSubmitHandler({
+    email,
+    password,
+    setAuthError,
+    setIsSubmitting,
+    setValidationError,
+  });
 
   return (
     <AuthShell

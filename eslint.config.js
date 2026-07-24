@@ -7,6 +7,7 @@ module.exports = [
     ignores: ['node_modules/**', 'dist/**']
   },
   {
+    files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -33,12 +34,20 @@ module.exports = [
       'no-console': 'warn',
       'no-unused-vars': 'error',
       'max-len': ['error', { code: 100 }],
-      complexity: ['error', 10]
+      complexity: ['error', 10],
+      'max-lines-per-function': ['error', { max: 50, skipComments: true, skipBlankLines: true }],
+      'max-depth': ['error', 3]
     },
     settings: {
       react: {
         version: 'detect'
       }
+    }
+  },
+  {
+    files: ['tests/**/*.{js,jsx}'],
+    rules: {
+      'max-lines-per-function': 'off'
     }
   }
 ];

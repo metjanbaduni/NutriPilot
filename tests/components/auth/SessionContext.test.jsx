@@ -110,7 +110,7 @@ describe('SessionContext', () => {
     });
   });
 
-  test('treats explicit unauthenticated message as unauthenticated when name is missing', async () => {
+  test('treats unauthenticated message as unauthenticated when name is missing', async () => {
     // Arrange
     const error = new Error('The user is not authenticated');
     error.name = '';

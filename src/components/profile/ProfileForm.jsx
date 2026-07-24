@@ -260,67 +260,89 @@ function SelectInputField({ id, label, value, onChange, options, placeholder, er
   );
 }
 
+function ProfileNumericFields({ formValues, validationErrors, onFieldChange, isDisabled }) {
+  return (
+    <div className="profile-grid">
+      <NumericInputField
+        id="bodyWeightKg"
+        label="Weight (kg)"
+        value={formValues.bodyWeightKg}
+        onChange={onFieldChange('bodyWeightKg')}
+        error={validationErrors.bodyWeightKg}
+        isDisabled={isDisabled}
+      />
+      <NumericInputField
+        id="heightCm"
+        label="Height (cm)"
+        value={formValues.heightCm}
+        onChange={onFieldChange('heightCm')}
+        error={validationErrors.heightCm}
+        isDisabled={isDisabled}
+      />
+      <NumericInputField
+        id="ageYears"
+        label="Age"
+        value={formValues.ageYears}
+        onChange={onFieldChange('ageYears')}
+        error={validationErrors.ageYears}
+        isDisabled={isDisabled}
+      />
+    </div>
+  );
+}
+
+function ProfileSelectFields({ formValues, validationErrors, onFieldChange, isDisabled }) {
+  return (
+    <div className="profile-grid">
+      <SelectInputField
+        id="gender"
+        label="Gender"
+        value={formValues.gender}
+        onChange={onFieldChange('gender')}
+        options={GENDER_OPTIONS}
+        placeholder="Select gender"
+        error={validationErrors.gender}
+        isDisabled={isDisabled}
+      />
+      <SelectInputField
+        id="activityLevel"
+        label="Training Level"
+        value={formValues.activityLevel}
+        onChange={onFieldChange('activityLevel')}
+        options={ACTIVITY_OPTIONS}
+        placeholder="Select activity"
+        error={validationErrors.activityLevel}
+        isDisabled={isDisabled}
+      />
+      <SelectInputField
+        id="goal"
+        label="Goal"
+        value={formValues.goal}
+        onChange={onFieldChange('goal')}
+        options={GOAL_OPTIONS}
+        placeholder="Select goal"
+        error={validationErrors.goal}
+        isDisabled={isDisabled}
+      />
+    </div>
+  );
+}
+
 function ProfileFields({ formValues, validationErrors, onFieldChange, isDisabled }) {
   return (
     <>
-      <div className="profile-grid">
-        <NumericInputField
-          id="bodyWeightKg"
-          label="Weight (kg)"
-          value={formValues.bodyWeightKg}
-          onChange={onFieldChange('bodyWeightKg')}
-          error={validationErrors.bodyWeightKg}
-          isDisabled={isDisabled}
-        />
-        <NumericInputField
-          id="heightCm"
-          label="Height (cm)"
-          value={formValues.heightCm}
-          onChange={onFieldChange('heightCm')}
-          error={validationErrors.heightCm}
-          isDisabled={isDisabled}
-        />
-        <NumericInputField
-          id="ageYears"
-          label="Age"
-          value={formValues.ageYears}
-          onChange={onFieldChange('ageYears')}
-          error={validationErrors.ageYears}
-          isDisabled={isDisabled}
-        />
-      </div>
-      <div className="profile-grid">
-        <SelectInputField
-          id="gender"
-          label="Gender"
-          value={formValues.gender}
-          onChange={onFieldChange('gender')}
-          options={GENDER_OPTIONS}
-          placeholder="Select gender"
-          error={validationErrors.gender}
-          isDisabled={isDisabled}
-        />
-        <SelectInputField
-          id="activityLevel"
-          label="Training Level"
-          value={formValues.activityLevel}
-          onChange={onFieldChange('activityLevel')}
-          options={ACTIVITY_OPTIONS}
-          placeholder="Select activity"
-          error={validationErrors.activityLevel}
-          isDisabled={isDisabled}
-        />
-        <SelectInputField
-          id="goal"
-          label="Goal"
-          value={formValues.goal}
-          onChange={onFieldChange('goal')}
-          options={GOAL_OPTIONS}
-          placeholder="Select goal"
-          error={validationErrors.goal}
-          isDisabled={isDisabled}
-        />
-      </div>
+      <ProfileNumericFields
+        formValues={formValues}
+        validationErrors={validationErrors}
+        onFieldChange={onFieldChange}
+        isDisabled={isDisabled}
+      />
+      <ProfileSelectFields
+        formValues={formValues}
+        validationErrors={validationErrors}
+        onFieldChange={onFieldChange}
+        isDisabled={isDisabled}
+      />
     </>
   );
 }

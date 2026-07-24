@@ -56,8 +56,16 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   are NOT registered and /profile is NOT a real route yet — T046 fixes this. A backend task is NOT
   done until the real endpoint answers.
 - `calculateMacros` is duplicated in `src/utils/` and `amplify/backend/function/lib/` — change both or neither.
-- No CI yet — T048 adds `.github/workflows/ci.yml` running `npm run verify && npm run build` on
-  every push/PR (update this line when it lands).
+- CI (`.github/workflows/ci.yml`, added by T048) runs `npm run verify && npm run build` on every
+  push and PR to main.
+- eslint.config.js's base block previously had no `files` key, silently excluding
+  ALL .jsx files from linting (fixed in T048). Lesson: when adding or changing a
+  lint rule, verify the base config's files glob actually matches every extension
+  in the source tree before trusting a clean lint run.
+- Test files (tests/**/*.test.js) are exempt from max-lines-per-function per
+  constitution — encoded as an ESLint override in eslint.config.js (T048). If a
+  test file's describe() block trips other rules later, check for a matching
+  constitution exception before tightening the rule.
 - The previous Codex/Copilot workflow (prompt scripts, spec-kit templates, per-story architecture
   docs) is archived under `docs/archive/` — do not follow anything in there.
 

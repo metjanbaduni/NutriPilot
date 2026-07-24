@@ -1,12 +1,34 @@
 # NutriPilot Agentic Development Workflow v3
 
-**Version:** 3.5
-**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3; updated 2026-07-19: document-sync pass — fixed stale cross-references, synced the Part 7 checklist with the repo, defined the Kickoff-vs-/groom boundary, reordered Part 6 to match the groomed self-contained US3 cards, added housekeeping steps to the /ship spec and the design-screen comparison to /verify-ui; same date, goal-review pass — added the prose-vs-state maintenance rule and compressed the completed steps 0.1/0.2, made the slim importing CLAUDE.md the 3.1 default and retired the monolith, allowed Part 3 in one session with the dry-run as its acceptance test, deferred Part 8 until first rate-limit, corrected the mock-data framing in Part 0 and the Part 7 prompts, and routed the spec.md /api-prefix fix into the 2.2 session)
+**Version:** 3.6
+**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3; updated 2026-07-19: document-sync pass — fixed stale cross-references, synced the Part 7 checklist with the repo, defined the Kickoff-vs-/groom boundary, reordered Part 6 to match the groomed self-contained US3 cards, added housekeeping steps to the /ship spec and the design-screen comparison to /verify-ui; same date, goal-review pass — added the prose-vs-state maintenance rule and compressed the completed steps 0.1/0.2, made the slim importing CLAUDE.md the 3.1 default and retired the monolith, allowed Part 3 in one session with the dry-run as its acceptance test, deferred Part 8 until first rate-limit, corrected the mock-data framing in Part 0 and the Part 7 prompts, and routed the spec.md /api-prefix fix into the 2.2 session; updated 2026-07-24: full-UI MVP scope decision recorded in Part 0, two-track map added at the top, Part 6 rebuilt as parallel design/code tracks with an explicit convergence, two standing sync rules added to Part 4.0, the Story Kickoff specified as the /kickoff skill in new step 3.8, Part 7 checklist extended to match)
 **Replaces:** `docs/agentic-workflow-v2.md` (deleted)
 **Corrected against:** `docs/audit-2026-07-11.md` (the repo audit; where v2 and the audit conflict, the audit wins)
 **Audience:** Product Owner with junior dev skills, using Claude Code + Claude Design
 
 **How to read this document:** every setup step has three parts — **Instruction** (exactly what to do, with ready-to-paste content), **Reason** (why it matters), and **Verify** (how you confirm it worked). Technical terms are defined the first time they appear. All config blocks are complete; nothing says "adjust as needed" without telling you exactly what to adjust.
+
+**The map (added 2026-07-24).** Two tracks run in parallel; steps WITHIN each track are sequential.
+
+```
+DESIGN TRACK (spec.md, DESIGN.md, docs/design/) — sequential:
+  0. Design-system sync (Manrope font + components)
+  1. Export all screens + states → docs/design/screens/
+  2. /design-spec-sync, one screen per session
+  2b. /groom US3 — after the dashboard screen syncs
+  3. Requirement IDs (2.2) — once spec.md stops moving
+
+CODE TRACK (eslint, Amplify, src/) — sequential:
+  T048 (lint + CI) → T046 (wire the backend) → T047 (error messages)
+
+CONVERGE — then, in order:
+  4. Harness build (one sitting) + dry run
+  5. /verify-ui audit of the three shipped screens
+  6. /kickoff per new story
+  7. Build
+```
+
+The convergence dependencies, explicitly: **/verify-ui needs the harness AND the updated design docs** (auditing against the old Sora system would be wasted work); **/kickoff needs requirement IDs AND exported screens**; **building any new story needs T046's wiring pattern**. Part 6 is this same path with reasons attached.
 
 **Maintenance rule (added 2026-07-19):** state lives in the Part 7 checklist and the repo, never in prose. When a step completes or a claim is superseded, replace its prose with a one-line status pointer — full instructions stay only for steps not yet done. Prose that duplicates repo state is where drift comes from.
 
@@ -41,11 +63,24 @@ v3's response, threaded through every part below: **real-endpoint verification e
 
 v2 also got ~13 repo facts wrong (paths, commands, spec claims — full table in audit section 5). Every config in this document uses the verified real values, and the hook syntax has been checked against the current official Claude Code documentation (v2's `$CLAUDE_FILE_PATHS` form is outdated; hooks now receive JSON on stdin — explained in Part 3.3).
 
+### Scope decision (2026-07-24): the full UI is the MVP
+
+After reviewing all 23 screens in Claude Design, the PO decided to **ship the full UI as the MVP**, not the narrower scope currently in spec.md. New surfaces entering scope:
+
+- **Weekly Overview** (new screen)
+- **Electrolytes + supplements tracking** — dashboard card, Log Meal fields, and the AI analysis schema
+- **A landing page**
+- **Settings' four states + a view/edit toggle**
+
+The typeface also changed: **Sora → Manrope**.
+
+Consequences: **US5+ become real stories with their own Kickoffs** (this is why the Kickoff is now a skill — Part 3.8), and **remaining backend work expands** — new stored fields, endpoint/schema changes, and weekly aggregation all need Lambdas-and-wiring work beyond what tasks.md holds today. spec.md does not yet reflect any of this; it catches up screen by screen via `/design-spec-sync`, per the Part 6 design track. Until a surface has been synced, spec.md is behind the screens by design — the screens are the newer decision.
+
 ---
 
 ## Part 1 — Phase 0: Cleanup task zero
 
-Do this **before** any harness setup or new feature code. (Generating design screens in Claude Design — Part 2.1 — is the one thing you can safely do in parallel; it never touches the code.) Steps 0.1–0.2 are complete (status pointers below). Steps 0.3–0.5 are Claude Code sessions run in this exact order: **T048 first** (so the new lint rules and CI guard the next two fixes), then **T046** (the critical backend blocker), then **T047**.
+This Part is the **CODE TRACK** of the two-track map at the top of this document — it does not gate everything. The entire design track (design-system sync, screen exports, `/design-spec-sync`, requirement IDs) runs in parallel with it; only the convergence steps (harness build, `/verify-ui` audit, Kickoffs, new-story code) wait for this track to finish. See the map rather than re-deriving the order here. Steps 0.1–0.2 are complete (status pointers below). Steps 0.3–0.5 are Claude Code sessions run in this exact order: **T048 first** (so the new lint rules and CI guard the next two fixes), then **T046** (the critical backend blocker), then **T047**.
 
 > **Note on steps 0.3–0.5:** the harness (Part 3) doesn't exist yet, so for these three sessions you run the gates yourself: after Claude finishes, run `npm run verify && npm run build` in your terminal, read the diff (`git diff`), and commit manually with a `type: description` message on a feature branch. This is the last time you'll do it by hand.
 
@@ -145,6 +180,8 @@ This document is the *only* process document — everything that competes with i
 
 ### 2.1 Step 1 — Generate the screens in Claude Design *(your job, no repo dependency)*
 
+> **Stale, compression pending (2026-07-24):** this step is written for the original 3-surface / 4-PNG scope; the full-UI decision (Part 0) supersedes it via design-track steps 1–2 in Part 6. It will be compressed to a status pointer **after** the export commit lands, not before — until then it stays as reference for how a screen session is run.
+
 **Instruction:** For each of the three UI surfaces in spec.md — **Dashboard**, **Log Meal modal**, **Settings** — run one Claude Design conversation:
 
 1. Paste the screen's full section from spec.md (layout sketch, States, Interactions) plus the contents of `docs/design/DESIGN.md`, and say: *"Generate this screen exactly per the spec and design system. Dark mode only. Mobile-first, 390px wide. If the spec is ambiguous or contradicts itself, list the ambiguities instead of inventing."*
@@ -238,7 +275,7 @@ Then approve. The agent applies the block to tasks.md, applies any spec.md edits
 
 When every card except the Demo Gate is checked, run the gate — this is **your** session, ~20 minutes:
 
-1. Seed data (the T049 script), `npm run dev`, sign in.
+1. Seed data (the T051 script), `npm run dev`, sign in.
 2. Execute the story's Independent Test from tasks.md, literally, step by step.
 3. Have Claude run `/verify-ui` for each state; put the screenshot next to the design PNG. You're checking layout, states, and tokens — not pixel-identical rendering; the design screen is a contract, not a bitmap.
 4. Divergence that's a bug → one fix task through the ritual, then re-run the gate. Divergence that's *better* than the design → update the PNG (regenerate or replace), one line in NOTES.md why.
@@ -306,13 +343,13 @@ US4 (Meal Logging + AI) runs the identical loop — this is the part you now do 
 - [ ] Expect the kickoff to flag: no wiring/deploy task for **four** Lambdas (T037–T040 — same C1 pattern again), the OpenAI key's Secrets Manager setup having no task, and no US4 Demo Gate
 - [ ] Approve the block (2.4 checklist) → execute (2.5) → Demo Gate → outer review
 
-When US4's Demo Gate is checked, the MVP loop from spec.md is complete end to end — and you'll have run this Part three times (US3, US4, and the change intakes between), which is the point where it's yours.
+When US4's Demo Gate is checked, the original spec.md loop is complete end to end — the full-UI MVP (Part 0 scope decision) continues through the US5+ stories, each via its own `/kickoff` — and you'll have run this Part three times (US3, US4, and the change intakes between), which is the point where it's yours.
 
 ---
 
 ## Part 3 — Harness setup, corrected for this repo
 
-All of 3.1–3.6 may be created in a single session — every file below is fully specified, so there is nothing to design — and the Part 7 dry-run is the acceptance test for the lot; the per-step Verify lines then become optional spot-checks, not required rituals. (3.7's CI file arrives via T048 on its own track.) After Part 3 is done, you never run gates by hand again.
+All of 3.1–3.6 plus 3.8 may be created in a single session — every file below is fully specified, so there is nothing to design — and the Part 7 dry-run is the acceptance test for the lot; the per-step Verify lines then become optional spot-checks, not required rituals. (3.7's CI file arrives via T048 on its own track.) After Part 3 is done, you never run gates by hand again.
 
 Vocabulary for this part: **frontmatter** is a small block of `key: value` settings between two `---` lines at the top of a Markdown file — tools read it as configuration; **YAML** is the format those key/value lines are written in; a **matcher** is a pattern that says which events a rule applies to (e.g. "when the Edit or Write tool runs"); **stdin** ("standard input") is the pipe through which one program feeds data into another; a **subagent** is a separate Claude instance with its own context window and its own restricted tool list; a **skill** is a reusable instruction file you invoke as a slash-command (like `/ship`); a **hook** is a script Claude Code runs automatically at lifecycle events — no AI judgment involved.
 
@@ -648,6 +685,53 @@ jobs:
 
 **Verify:** Push any branch → GitHub → Actions tab → the "CI" run appears; open it and see verify + build both green. `gh run watch` in your terminal does the same without the browser.
 
+### Step 3.8 — The /kickoff skill
+
+**Instruction:** Create `.claude/skills/kickoff/SKILL.md` during the same harness sitting as 3.1–3.6. This turns the Story Kickoff (the Part 2.3 worked example) into a repeatable skill — necessary now that the full-UI scope decision (Part 0) makes US5+ real stories, each needing its own Kickoff.
+
+```markdown
+---
+name: kickoff
+description: Story Kickoff — create a NEW story's task block in tasks.md from spec.md and the design screens. Run once per story, before any of its code. /groom maintains existing blocks; /kickoff creates them.
+disable-model-invocation: true
+---
+
+Story Kickoff for the named story. Read: the story's spec.md sections (with requirement
+IDs); its design screens in docs/design/screens/ (every state); docs/design/screens/NOTES.md;
+specs/000-planning-phase/tasks.md; and the task-writing rules in
+docs/agentic-workflow-v3.md Part 4.3. Do not write code or edit any file until step 5.
+
+1. COVERAGE FIRST: walk the story's requirement IDs and report (a) every ID with no
+   covering task, and (b) every proposed task clause with no requirement behind it.
+   Coverage drives the breakdown — not the other way around.
+2. Propose the story's task block:
+   - Full Task Card format (Files / Notes / Tests / Acceptance / DoD), every card
+     SELF-CONTAINED: executable by an agent with no other prompt.
+   - Every UI card names its four states (loading / empty / error / populated) in
+     Acceptance.
+   - Every backend card carries the Real Endpoint Rule (Amplify registration + route
+     behind the Cognito authorizer + amplify push + live smoke evidence) — the T046 shape.
+   - The block ALWAYS ends with a Demo Gate card (Independent Test executed against the
+     dev environment + design-screen comparison via /verify-ui).
+   - Explicitly include the easy-to-forget plumbing: data seeding for the Independent
+     Test; contracts/openapi.yaml updates for any new or changed endpoint; data-model
+     additions for any new stored field; and any one-time PO setup (secrets, account
+     signup, CLI auth) as a named PRECONDITION on the cards that need it.
+3. DECISIONS ONLY THE PO CAN MAKE: list each as a plain-language question with 2–3
+   options and a recommendation. Questions are NEVER filled silently — a gap filled
+   silently is a product decision made by nobody.
+4. Show the full proposed block + the questions list, then WAIT for approval.
+5. On approval: apply the block to tasks.md (numbering from the next free task ID —
+   verify against tasks.md, never assume) plus any spec.md edits the PO's decisions
+   require, in one commit: "docs: <story> kickoff — story block + spec decisions".
+```
+
+Commit the file (during the harness sitting, via the dry-run branch or its own `/ship`).
+
+**Reason:** Part 2.3 proved the Kickoff works but ran it as a pasted prompt — fine when US3 and US4 were the only stories left. The full-UI MVP means at least four more Kickoffs, and a skill is how a discipline survives repetition without decaying (same argument as `/ship`: remembering doesn't scale). The plumbing list is the audit's C1 lesson generalized: what never gets its own card never ships — seeding, openapi.yaml, data-model fields, and one-time PO setup are exactly the items history shows get forgotten.
+
+**Verify:** run `/kickoff` for the first new story (after its screens are synced and requirement IDs exist). The proposed block must pass the Part 2.4 five-point checklist without edits, and the questions list must be non-empty for any screen whose spec section is fresh — a silent Kickoff on a new surface means it invented answers.
+
 ---
 
 ## Part 4 — The per-task ritual and how to write tasks
@@ -664,7 +748,7 @@ So each arrow gets a guard:
 | spec.md + DESIGN.md → tasks.md | `/groom` (skill) |
 | tasks.md → code | the per-task ritual (4.2) + the code-reviewer |
 
-**Story Kickoff vs `/groom` — the boundary.** Two different stations touch tasks.md, and they must not blur: **Story Kickoff (2.3) creates a story's block, once** — the full breakdown against spec + design screen, the Demo Gate card, the seed/data task, and the requirement-ID coverage check (requirements with no covering task, and vice versa). **`/groom` maintains an existing block** after spec.md or DESIGN.md change: it re-aligns cards with the current docs and upgrades them to the full card format, but it does not invent the story-level infrastructure a Kickoff owns. First time a story is scheduled: Kickoff. Every doc change after: `/design-spec-sync` (if a screen moved), then `/groom`. When the two overlap — a story got groomed before its Kickoff ran, as happened with US3 — the Kickoff shrinks to exactly the pieces grooming doesn't produce (see the US3 annotation in 2.3).
+**Story Kickoff vs `/groom` — the boundary.** Two different stations touch tasks.md, and they must not blur: **the Story Kickoff creates a story's block, once** — the full breakdown against spec + design screen, the Demo Gate card, the seed/data task, and the requirement-ID coverage check (requirements with no covering task, and vice versa). The Kickoff is now a **skill** — `/kickoff <story>`, specified in Part 3.8; Part 2.3 remains the worked example of what a good Kickoff must surface. **`/groom` maintains an existing block** after spec.md or DESIGN.md change: it re-aligns cards with the current docs and upgrades them to the full card format, but it does not invent the story-level infrastructure a Kickoff owns. First time a story is scheduled: `/kickoff`. Every doc change after: `/design-spec-sync` (if a screen moved), then `/groom`. When the two overlap — a story got groomed before its Kickoff ran, as happened with US3 — the Kickoff shrinks to exactly the pieces grooming doesn't produce (see the US3 annotation in 2.3).
 
 **The per-screen ritual.** Every screen — new or changed — goes through these six steps, in order:
 
@@ -682,6 +766,11 @@ So each arrow gets a guard:
 - **Product decision** — screen and docs disagree on WHAT the feature does. Only you can settle this; it comes to you as a question with a recommendation. Example: the screen shows a Nutritionist Analysis panel the API can't feed — defer it or spec it?
 - **Doc gap** — the screen shows something the docs simply don't describe yet. The agent drafts the doc update, clearly marked as new, for your approval.
 - **Rule violation** — the screen breaks an established design rule (fixed macro colors, dark-only, four states, no icons/emoji). Here the *screen* is wrong, not the rule: you fix it in Claude Design and re-export. Rules never bend to match a screen, because each rule was a decision you already made once — a screen that violates it is a generation glitch, and weakening the rule to accommodate a glitch would silently reopen every screen that decision covers.
+
+**Two standing rules for every `/design-spec-sync` session (added 2026-07-24):**
+
+1. **spec.md records BEHAVIOR, never prototype mechanism.** Claude Design prototypes fake a backend with localStorage so the screens feel alive — that is scaffolding, not product. Nothing about localStorage, client-side persistence, or any other prototype mechanism may ever reach spec.md. The spec says *what the user sees and what the system guarantees*; how the prototype faked it is noise.
+2. **Unsourced targets are product decisions, never inventions.** If a screen shows progress against a target that no constitution formula produces (e.g. sodium or potassium targets — the macro formulas don't compute them), that is a **product decision to flag** in the sync's questions list. The agent must never invent a formula, a default target, or a data source to make the screen coherent.
 
 **The control principle.** Every gate produces the same two outputs: a **diff** (what the agent proposes to change) and a **questions list** (what it couldn't decide). You review the diff and answer the questions — you never re-read whole documents to find what moved. And the mirror rule for the agent: anything ambiguous *must* surface as a question. Silent gap-filling is forbidden at every station — a gap filled silently is a product decision made by nobody.
 
@@ -797,17 +886,29 @@ The two files to attach: `.specify/memory/constitution.md` and `spec.md` (or the
 
 ## Part 6 — Order of work: the master path
 
-This is the whole journey, in one list — Parts 1→2→3 in reading order, then the per-story loop:
+**(Rebuilt 2026-07-24 for the full-UI scope decision — Part 0.)** Two tracks run in parallel; steps within each track are sequential. The compact map at the top of this document is this same path without the reasons.
 
-1. **Phase 0 cleanup** (Part 1) — the hard blocker; nothing else matters until the backend is wired and the gates exist.
-2. **Generate the design screens** (Part 2.1) — browser work in Claude Design, zero repo dependency; start it in parallel while Phase 0 sessions run. Must exist before step 4.
-3. **Number the spec requirements** (Part 2.2) — one document-only session, once ever; gate it by hand like the Phase 0 sessions.
-4. **US3 Story Kickoff** (Part 2.3–2.4) — the gap report, your decisions, the corrected US3 block with wiring task and Demo Gate. Also document-only. No US3 code before this is approved.
-5. **Harness** (Part 3), then the dry-run task from the Part 7 checklist — set up now, because the next step is the first real implementation.
-6. **Dashboard backend (T027)** — self-contained and marked `[P]` in tasks.md: its groomed card carries its own Amplify registration, route, deploy, and live smoke test (the T046 wiring pattern), so it self-verifies without any frontend and can run before or in parallel with the frontend chain. Its one hard prerequisite is T046 landing first — T027 reuses the routing pattern T046 decides. Use the backend-task prompt in Part 7.
-7. **Dashboard frontend chain — T028 → T029 → T031, with T030 anytime before T031** (the Dependencies section of tasks.md is the authority on this order). The API helper (T028) targets the real `/dashboard` route from the start; `tests/fixtures/dashboard.js` feeds the *unit tests*, not the running app, and T031's card includes fixing that fixture's internal inconsistencies. Use the screen-task prompt in Part 7 for T031. *Note:* earlier drafts had a separate "swap the frontend from fixture to the real API" task here — the groomed self-contained cards made it obsolete. There is no swap task; don't add one.
-8. **US3 Demo Gate** (Part 2.5), outer review, merge — the story is now actually done, by the new definition of done.
-9. **Onward, story by story** — US4 via its own Kickoff (Part 2.8), then the Polish phase (T043, T045). Requirement changes along the way go through the Change Intake (Part 2.6), never through chat.
+### DESIGN TRACK — spec.md, DESIGN.md, docs/design/; zero code dependency
+
+0. **Design-system sync for the Manrope font change + component updates.** DESIGN.md and the token files catch up with what changed in Claude Design: Sora → Manrope everywhere, plus the component updates the 23-screen review produced. This step also creates **one task card** for the code-side font change (swap the font import/family in the shipped CSS) *and* for fixing the stale "Sora" references in this doc's 3.6 skill text and in AGENTS.md (checked 2026-07-24: AGENTS.md currently has none — the card should verify at execution time rather than assume; DESIGN.md's five Sora references are fixed by this sync itself).
+1. **Export all screens and states** to `docs/design/screens/`, commit. All 23 screens, every state — the export is the visual contract; an unexported screen doesn't exist to the workflow.
+2. **`/design-spec-sync`, one screen per session**, your Claude Design notes pasted in. Runs under the two standing rules in Part 4.0: behavior-never-mechanism (no localStorage in spec.md) and unsourced-targets-are-product-decisions (e.g. sodium/potassium).
+   
+   **2b. `/groom US3` — immediately after the dashboard's `/design-spec-sync`.** The groomed US3 cards (commit cc902bc) predate the full-UI decision; the dashboard screen now carries the electrolytes card, so once it syncs, re-groom US3 to re-align its cards with the new docs — before the reduced US3 Kickoff at convergence, not during it.
+3. **Requirement IDs (2.2) — once spec.md settles.** Pointless while `/design-spec-sync` is still moving sections. New prefixes for the new surfaces (e.g. WEEK- for Weekly Overview, LAND- for the landing page), and the `/api` heading fix rides along in the same session as before.
+
+### CODE TRACK — eslint, Amplify, src/; parallel with the design track, fully independent
+
+Phase 0 in its existing order: **T048 (lint + CI) → T046 (wire the backend) → T047 (error messages)**. Part 1 is the detail. Nothing in the design track waits for this, and nothing here waits for the design track.
+
+### CONVERGE — both tracks done, then in order
+
+4. **Harness build in one sitting** (Part 3, including the new `/kickoff` skill, 3.8), then the dry-run task from the Part 7 checklist — its acceptance test.
+5. **`/verify-ui` audit of the three shipped screens** (login, register, settings) against the **new** design system. Every finding becomes a task card, not an in-session fix — the audit measures the gap; the ritual closes it.
+6. **`/kickoff` per new story** — US3's reduced Kickoff (per the 2.3 annotation), then US4, then the US5+ stories the scope decision created.
+7. **Build** — the per-task ritual, story by story: backend card first (T046 wiring pattern), frontend chain per the Dependencies section of tasks.md, Demo Gate, outer review, merge. For US3 specifically: T027 is self-contained and `[P]`; T028 → T029 → T031 with T030 anytime before T031; there is no fixture-to-API swap task — don't add one.
+
+The convergence dependencies, explicitly: **/verify-ui needs the harness AND the updated design docs** — auditing shipped screens against the retired Sora system would measure the wrong gap; **/kickoff needs requirement IDs AND exported screens** — coverage-first is meaningless without IDs to cover; **building any new story needs T046's wiring pattern** — every backend card copies it.
 
 ### What NOT to adopt yet (kept from v2, still true)
 
@@ -834,15 +935,31 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 > **This checklist is the single record of workflow progress; `/ship` ticks items here when work completes them.**
 
+**Done (kept for the record):**
+
 - [x] 0.1 Sync tasks.md: check T026A/T044, paste T046–T048, format fixes — done 2026-07-13 (PR #1)
 - [x] 0.2 Archive all dead-workflow files (.codex, scripts/prompts, .github/prompts, docs/ai-prompts, docs/architecture, .specify/templates + specs, old workflow doc), prune `prompt:*` scripts, rewrite AGENTS.md — done 2026-07-13 (commit 93b1960, PR #1)
+- [x] 4.0 (partial, ran early) US3 cards groomed to full self-contained format via `/groom` — done 2026-07-18 (commit cc902bc); does **not** replace the US3 Kickoff below
+- [x] 4.0 Create `/groom` + `/design-spec-sync` skills (`.claude/skills/groom/`, `.claude/skills/design-spec-sync/`) — done 2026-07-18 (commit 8baa492)
+- [x] 4.0 Create `docs/HARNESS.md` (harness one-pager; its maintenance rule feeds /ship housekeeping step 6a) — done 2026-07-18 (commit 8baa492)
+- [x] 4.1 Create `/retro` skill (`.claude/skills/retro/`) — done 2026-07-18 (commit 7f04298)
+
+**CODE TRACK (sequential; parallel with the design track):**
+
 - [ ] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
 - [ ] 0.4 T046: backend wiring + live smoke test — Claude session (pair exercise for Amplify CLI)
 - [ ] 0.5 T047: error messages — Claude session; open the cleanup PR; merge when CI is green
-- [ ] 2.1 Design screens generated in Claude Design + NOTES.md — parallel work, start anytime after 0.2
-- [ ] 2.2 Requirement IDs added to spec.md + coverage table — one session, manual gate
-- [x] 4.0 (partial, ran early) US3 cards groomed to full self-contained format via `/groom` — done 2026-07-18 (commit cc902bc); does **not** replace the US3 Kickoff below
-- [ ] 2.3–2.4 US3 Story Kickoff, reduced scope per the 2.3 annotation: Demo Gate card + seeding task (T051) + requirement-ID coverage check, approved and committed
+
+**DESIGN TRACK (sequential; parallel with the code track):**
+
+- [ ] 6.0 Design-system sync: Manrope + component updates into DESIGN.md/tokens via `/design-spec-sync`; creates the task card for the code-side font change + the stale-Sora fixes (this doc's 3.6; verify AGENTS.md at execution time)
+- [ ] 6.1 Export all 23 screens + states → `docs/design/screens/` (+ NOTES.md), commit — screens are already generated in Claude Design (scope decision, Part 0)
+- [ ] 6.2 `/design-spec-sync` one screen per session, PO notes pasted in — every screen through the gate, under the two Part 4.0 standing rules
+- [ ] 6.2b `/groom US3` after the dashboard's `/design-spec-sync` — re-align the cc902bc cards (electrolytes card, new docs) before the reduced US3 Kickoff
+- [ ] 2.2 Requirement IDs added to spec.md + coverage table — one session, only after spec.md settles; new prefixes for the new surfaces (WEEK-, LAND-, …) + the `/api` heading fix
+
+**CONVERGE (both tracks done; in order):**
+
 - [ ] 3.1 Create `CLAUDE.md` — 15 min
 - [ ] 3.2 Create `.claude/settings.json` (permissions + hooks block) — 10 min
 - [ ] 3.3 Install `jq` if needed; create + chmod `.claude/hooks/lint-changed.sh` — 10 min
@@ -851,10 +968,11 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 - [ ] 3.5 prerequisite: one-time push setup (SSH key in Keychain + `gh auth switch` to personal) — 5 min (`gh auth switch` to `metjanbaduni` verified done 2026-07-19; Keychain half unverified)
 - [ ] 3.6 Add Playwright MCP; create `.claude/skills/verify-ui/SKILL.md` — 20 min
 - [ ] 3.7 Confirm `.github/workflows/ci.yml` exists (from 0.3) and is green
-- [x] 4.0 Create `/groom` + `/design-spec-sync` skills (`.claude/skills/groom/`, `.claude/skills/design-spec-sync/`) — done 2026-07-18 (commit 8baa492)
-- [x] 4.0 Create `docs/HARNESS.md` (harness one-pager; its maintenance rule feeds /ship housekeeping step 6a) — done 2026-07-18 (commit 8baa492)
-- [x] 4.1 Create `/retro` skill (`.claude/skills/retro/`) — done 2026-07-18 (commit 7f04298)
+- [ ] 3.8 Create `.claude/skills/kickoff/SKILL.md` — 10 min (same sitting as 3.1–3.6)
 - [ ] Dry run: one trivial change through the full ritual (branch → plan → implement → /verify-ui → /ship → CI → merge) — 30 min
+- [ ] `/verify-ui` audit of the three shipped screens (login, register, settings) against the new design system — findings become task cards
+- [ ] 2.3–2.4 US3 Story Kickoff via `/kickoff`, reduced scope per the 2.3 annotation: Demo Gate card + seeding task (T051) + requirement-ID coverage check, approved and committed
+- [ ] `/kickoff` per remaining new story (US4, then the US5+ stories from the full-UI scope decision) — each before its first task
 - [ ] First real task: first card of the approved US3 block per the Part 6 order (T027 backend, or T028 if starting the frontend chain)
 - [ ] 2.5 US3 Demo Gate executed and signed off — the workflow has now run end to end once
 

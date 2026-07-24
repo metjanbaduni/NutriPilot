@@ -1,7 +1,7 @@
 # NutriPilot Agentic Development Workflow v3
 
-**Version:** 3.6
-**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3; updated 2026-07-19: document-sync pass — fixed stale cross-references, synced the Part 7 checklist with the repo, defined the Kickoff-vs-/groom boundary, reordered Part 6 to match the groomed self-contained US3 cards, added housekeeping steps to the /ship spec and the design-screen comparison to /verify-ui; same date, goal-review pass — added the prose-vs-state maintenance rule and compressed the completed steps 0.1/0.2, made the slim importing CLAUDE.md the 3.1 default and retired the monolith, allowed Part 3 in one session with the dry-run as its acceptance test, deferred Part 8 until first rate-limit, corrected the mock-data framing in Part 0 and the Part 7 prompts, and routed the spec.md /api-prefix fix into the 2.2 session; updated 2026-07-24: full-UI MVP scope decision recorded in Part 0, two-track map added at the top, Part 6 rebuilt as parallel design/code tracks with an explicit convergence, two standing sync rules added to Part 4.0, the Story Kickoff specified as the /kickoff skill in new step 3.8, Part 7 checklist extended to match)
+**Version:** 3.7
+**Date:** 2026-07-11 (updated 2026-07-13: added the specification flow as Part 2 and dual-harness Codex operation as Part 8 — the Parts now appear in the order you execute them; updated 2026-07-18: added Part 4.0, the PO content flow, guarded by the new `/design-spec-sync` and `/groom` skills; added Part 4.1, the learning loop, run by the new `/retro` skill — the ritual and task-writing rules are now 4.2 and 4.3; updated 2026-07-19: document-sync pass — fixed stale cross-references, synced the Part 7 checklist with the repo, defined the Kickoff-vs-/groom boundary, reordered Part 6 to match the groomed self-contained US3 cards, added housekeeping steps to the /ship spec and the design-screen comparison to /verify-ui; same date, goal-review pass — added the prose-vs-state maintenance rule and compressed the completed steps 0.1/0.2, made the slim importing CLAUDE.md the 3.1 default and retired the monolith, allowed Part 3 in one session with the dry-run as its acceptance test, deferred Part 8 until first rate-limit, corrected the mock-data framing in Part 0 and the Part 7 prompts, and routed the spec.md /api-prefix fix into the 2.2 session; updated 2026-07-24: full-UI MVP scope decision recorded in Part 0, two-track map added at the top, Part 6 rebuilt as parallel design/code tracks with an explicit convergence, two standing sync rules added to Part 4.0, the Story Kickoff specified as the /kickoff skill in new step 3.8, Part 7 checklist extended to match; same date, ordering-bug fix: CLAUDE.md creation moved from Part 8.1 / old step 3.1 to new Phase 0 step 0.2b, right after AGENTS.md lands in step 0.2 — Claude Code sessions from step 0.3 onward otherwise ran with no CLAUDE.md at all; step 3.1 now just upgrades the file's provisional manual-gate lines once /ship and /verify-ui exist; Part 8.1 and the Part 7 checklist updated to match)
 **Replaces:** `docs/agentic-workflow-v2.md` (deleted)
 **Corrected against:** `docs/audit-2026-07-11.md` (the repo audit; where v2 and the audit conflict, the audit wins)
 **Audience:** Product Owner with junior dev skills, using Claude Code + Claude Design
@@ -80,7 +80,7 @@ Consequences: **US5+ become real stories with their own Kickoffs** (this is why 
 
 ## Part 1 — Phase 0: Cleanup task zero
 
-This Part is the **CODE TRACK** of the two-track map at the top of this document — it does not gate everything. The entire design track (design-system sync, screen exports, `/design-spec-sync`, requirement IDs) runs in parallel with it; only the convergence steps (harness build, `/verify-ui` audit, Kickoffs, new-story code) wait for this track to finish. See the map rather than re-deriving the order here. Steps 0.1–0.2 are complete (status pointers below). Steps 0.3–0.5 are Claude Code sessions run in this exact order: **T048 first** (so the new lint rules and CI guard the next two fixes), then **T046** (the critical backend blocker), then **T047**.
+This Part is the **CODE TRACK** of the two-track map at the top of this document — it does not gate everything. The entire design track (design-system sync, screen exports, `/design-spec-sync`, requirement IDs) runs in parallel with it; only the convergence steps (harness build, `/verify-ui` audit, Kickoffs, new-story code) wait for this track to finish. See the map rather than re-deriving the order here. Steps 0.1–0.2b are complete (status pointers below). Steps 0.3–0.5 are Claude Code sessions run in this exact order: **T048 first** (so the new lint rules and CI guard the next two fixes), then **T046** (the critical backend blocker), then **T047**.
 
 > **Note on steps 0.3–0.5:** the harness (Part 3) doesn't exist yet, so for these three sessions you run the gates yourself: after Claude finishes, run `npm run verify && npm run build` in your terminal, read the diff (`git diff`), and commit manually with a `type: description` message on a feature branch. This is the last time you'll do it by hand.
 
@@ -90,7 +90,31 @@ This Part is the **CODE TRACK** of the two-track map at the top of this document
 
 ### Step 0.2 — Archive the Codex-era leftovers *(by hand)*
 
-> **Status: ✅ done 2026-07-13** — commit `93b1960`, merged in PR #1. Moved `.codex`, `scripts/prompts`, `docs/ai-assisted-development-workflow.md`, `.github/copilot-instructions.md`, `.github/prompts`, `docs/ai-prompts`, `docs/architecture`, `.specify/templates`, and `.specify/specs` into `docs/archive/`; pruned the two `prompt:*` npm scripts. One deviation, in your favor: `AGENTS.md` was rewritten directly with the **Part 8.1 shared version** (with the pre-T046 "Known state") instead of the short pointer originally specified here — so step 3.1 only needs the slim importing `CLAUDE.md`; AGENTS.md is already in its final shape. Deliberately untouched: `.specify/memory/constitution.md` (quality source of truth) and `docs/manual_testing/` (live test evidence, used by every Demo Gate).
+> **Status: ✅ done 2026-07-13** — commit `93b1960`, merged in PR #1. Moved `.codex`, `scripts/prompts`, `docs/ai-assisted-development-workflow.md`, `.github/copilot-instructions.md`, `.github/prompts`, `docs/ai-prompts`, `docs/architecture`, `.specify/templates`, and `.specify/specs` into `docs/archive/`; pruned the two `prompt:*` npm scripts. One deviation, in your favor: `AGENTS.md` was rewritten directly with the **Part 8.1 shared version** (with the pre-T046 "Known state") instead of the short pointer originally specified here — so step 0.2b only needs the slim importing `CLAUDE.md`; AGENTS.md is already in its final shape. Deliberately untouched: `.specify/memory/constitution.md` (quality source of truth) and `docs/manual_testing/` (live test evidence, used by every Demo Gate).
+
+### Step 0.2b — Create CLAUDE.md *(by hand)*
+
+> **Status: ✅ done 2026-07-24.** Moved here (ordering-bug fix) from where the original harness plan put it — Part 8.1 / old step 3.1 — because Claude Code sessions start as early as step 0.3, and none of them had a `CLAUDE.md` telling Claude that `AGENTS.md` exists. This is the one file Claude Code loads automatically at every session start, so it has to exist before the first Claude Code session in Phase 0, not after the harness (Part 3) is built.
+>
+> **Instruction:** create `CLAUDE.md` at the repo root with exactly this content (`@AGENTS.md` is Claude Code's import syntax — the referenced file's content is loaded as if pasted here):
+>
+> ```markdown
+> See @AGENTS.md for all project facts, commands, paths, design-system and quality rules,
+> and the tool-neutral workflow rules. Everything there applies.
+>
+> ## Claude Code-specific workflow
+> - Always start non-trivial work in Plan Mode; wait for my approval
+> - After implementing UI, verify visually with /verify-ui before declaring done (once
+>   it exists — until Part 3 is built, gate manually per Part 1's note)
+> - Ship via the /ship skill once it exists — until then, gate manually: run
+>   npm run verify && npm run build yourself, read the diff, commit on a feature branch
+> ```
+>
+> The two provisional lines (`/verify-ui`, `/ship`) say "once it exists" / "gate manually" because Part 1's steps 0.3–0.5 run before Part 3 builds those skills — the file describes reality at the time it's created, not the harness's eventual end state. Step 3.1 replaces those two lines with their final form once `/ship` and `/verify-ui` actually exist.
+>
+> **Reason:** CLAUDE.md is loaded at every session start and survives context compaction — it's the one instruction layer the agent can't forget. Creating it here, not in Part 8, means the very first Claude Code session (step 0.3) already knows `AGENTS.md` is the source of truth, instead of running three sessions blind before the harness catches up.
+>
+> **Verify:** start a fresh Claude Code session and ask *"What command proves the coverage gate passed, and where is the backlog source of truth?"* — it should answer `npm run verify` (or `test:coverage`) and `specs/000-planning-phase/tasks.md` without anything pasted into the prompt, proving the import works.
 
 ### Step 0.3 — T048: lint rules + CI *(Claude Code session #1)*
 
@@ -349,13 +373,15 @@ When US4's Demo Gate is checked, the original spec.md loop is complete end to en
 
 ## Part 3 — Harness setup, corrected for this repo
 
-All of 3.1–3.6 plus 3.8 may be created in a single session — every file below is fully specified, so there is nothing to design — and the Part 7 dry-run is the acceptance test for the lot; the per-step Verify lines then become optional spot-checks, not required rituals. (3.7's CI file arrives via T048 on its own track.) After Part 3 is done, you never run gates by hand again.
+All of 3.1–3.6 plus 3.8 may be done in a single session — every file below is fully specified, so there is nothing to design — and the Part 7 dry-run is the acceptance test for the lot; the per-step Verify lines then become optional spot-checks, not required rituals. (3.1 updates the CLAUDE.md already created in step 0.2b; 3.7's CI file arrives via T048 on its own track.) After Part 3 is done, you never run gates by hand again.
 
 Vocabulary for this part: **frontmatter** is a small block of `key: value` settings between two `---` lines at the top of a Markdown file — tools read it as configuration; **YAML** is the format those key/value lines are written in; a **matcher** is a pattern that says which events a rule applies to (e.g. "when the Edit or Write tool runs"); **stdin** ("standard input") is the pipe through which one program feeds data into another; a **subagent** is a separate Claude instance with its own context window and its own restricted tool list; a **skill** is a reusable instruction file you invoke as a slash-command (like `/ship`); a **hook** is a script Claude Code runs automatically at lifecycle events — no AI judgment involved.
 
-### Step 3.1 — Create CLAUDE.md
+### Step 3.1 — Update CLAUDE.md now that /ship and /verify-ui exist
 
-**Instruction:** The shared facts file already exists — step 0.2 shipped `AGENTS.md` in its final Part 8.1 shape (with the pre-T046 "Known state"), so this step is only the slim Claude-side file. Create `CLAUDE.md` at the repo root with exactly this content (`@AGENTS.md` is Claude Code's import syntax — the referenced file's content is loaded as if pasted here):
+> **Status: already created, 2026-07-24, in step 0.2b** (ordering-bug fix: the original harness plan created `CLAUDE.md` here, but Claude Code sessions start as early as step 0.3 in Phase 0 — long before Part 3 exists — so the file has to land right after `AGENTS.md` does, in step 0.2b, not here). This step is what's left: 0.2b's file has two provisional lines that say "once it exists" / "gate manually", because `/ship` and `/verify-ui` didn't exist yet when it was written. Now that 3.5 and 3.6 have created them, swap those two lines for their final form.
+
+**Instruction:** Edit `CLAUDE.md` at the repo root so it reads exactly:
 
 ```markdown
 See @AGENTS.md for all project facts, commands, paths, design-system and quality rules,
@@ -368,7 +394,7 @@ and the tool-neutral workflow rules. Everything there applies.
   and the feature-branch + PR flow
 ```
 
-> **The monolithic single-file CLAUDE.md this step used to specify is retired** (superseded 2026-07-19): its full content lives in Part 8.1's `AGENTS.md` template, which is already committed as `AGENTS.md`. Never maintain two copies of the shared facts — a second copy is exactly the drift this document exists to prevent. The "describe reality, never aspiration" rule now lives with the template in 8.1 (the pre-T046 caveat there).
+> **The monolithic single-file CLAUDE.md this step used to specify is retired** (superseded 2026-07-19): its full content lives in Part 8.1's `AGENTS.md` template, which is already committed as `AGENTS.md`. Never maintain two copies of the shared facts — a second copy is exactly the drift this document exists to prevent. The "describe reality, never aspiration" rule now lives with the template in 8.1 (the pre-T046 caveat there) — which is also why this step exists at all: the file must stop describing `/ship` and `/verify-ui` as future things the moment they're real.
 
 **Reason:** CLAUDE.md is loaded at every session start and survives context compaction — it's the one instruction layer the agent can't forget. This is *context engineering*: everything you used to retype per prompt lives here once, via the AGENTS.md import. It's lean on purpose: every line costs context in every session.
 
@@ -939,6 +965,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 - [x] 0.1 Sync tasks.md: check T026A/T044, paste T046–T048, format fixes — done 2026-07-13 (PR #1)
 - [x] 0.2 Archive all dead-workflow files (.codex, scripts/prompts, .github/prompts, docs/ai-prompts, docs/architecture, .specify/templates + specs, old workflow doc), prune `prompt:*` scripts, rewrite AGENTS.md — done 2026-07-13 (commit 93b1960, PR #1)
+- [x] 0.2b Create `CLAUDE.md` (repo root), importing AGENTS.md + provisional manual-gate lines for /verify-ui and /ship — done 2026-07-24 (moved here from Part 8.1/old step 3.1 as an ordering-bug fix, so Claude Code sessions from step 0.3 onward have it)
 - [x] 4.0 (partial, ran early) US3 cards groomed to full self-contained format via `/groom` — done 2026-07-18 (commit cc902bc); does **not** replace the US3 Kickoff below
 - [x] 4.0 Create `/groom` + `/design-spec-sync` skills (`.claude/skills/groom/`, `.claude/skills/design-spec-sync/`) — done 2026-07-18 (commit 8baa492)
 - [x] 4.0 Create `docs/HARNESS.md` (harness one-pager; its maintenance rule feeds /ship housekeeping step 6a) — done 2026-07-18 (commit 8baa492)
@@ -960,7 +987,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 **CONVERGE (both tracks done; in order):**
 
-- [ ] 3.1 Create `CLAUDE.md` — 15 min
+- [ ] 3.1 Update `CLAUDE.md` (created in 0.2b) to reference `/ship` and `/verify-ui` now that they exist — 5 min
 - [ ] 3.2 Create `.claude/settings.json` (permissions + hooks block) — 10 min
 - [ ] 3.3 Install `jq` if needed; create + chmod `.claude/hooks/lint-changed.sh` — 10 min
 - [ ] 3.4 Create `.claude/agents/code-reviewer.md` — 10 min
@@ -1002,7 +1029,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 ## Part 8 — Dual-harness operation: running the same workflow on Codex
 
-> **Status: deferred (2026-07-19).** Set this up the day you first hit a rate limit mid-story — nothing here blocks anything else, and unexercised machinery is where drift breeds. Two exceptions already live: 8.1's shared `AGENTS.md` shipped in step 0.2, and the slim importing `CLAUDE.md` is step 3.1's job. The Codex-side pieces (8.2–8.5 and the dual-tool checklist below) wait.
+> **Status: deferred (2026-07-19).** Set this up the day you first hit a rate limit mid-story — nothing here blocks anything else, and unexercised machinery is where drift breeds. Two exceptions already live: 8.1's shared `AGENTS.md` shipped in step 0.2, and the slim importing `CLAUDE.md` shipped in step 0.2b (moved there from this Part on 2026-07-24 — see the ordering-bug fix in the changelog — with step 3.1 upgrading its two provisional lines once `/ship`/`/verify-ui` exist). The Codex-side pieces (8.2–8.5 and the dual-tool checklist below) wait.
 
 **Why this part exists:** Claude Code has usage limits; when you hit them mid-week you don't want the workflow to stop. And you already know Codex produces good code here — the audit confirmed the Codex-era code passes the constitution almost everywhere; the failures were *process* gaps (missing wiring tasks, mock-only gates), not code quality. So the strategy is: make the **process** tool-agnostic, and give Codex a thin twin of the tool-specific layer.
 
@@ -1028,7 +1055,7 @@ The deterministic gates being tool-agnostic is the whole point: whichever model 
 
 ### 8.1 One instruction file for both tools
 
-**Instruction:** The standing instructions are two files: the shared `AGENTS.md` below (already shipped in step 0.2, superseding the short pointer that step originally specified) and the slim importing `CLAUDE.md` (created in step 3.1). This section holds the authoritative template for both.
+**Instruction:** The standing instructions are two files: the shared `AGENTS.md` below (already shipped in step 0.2, superseding the short pointer that step originally specified) and the slim importing `CLAUDE.md` (already created in step 0.2b — moved there from this Part so Claude Code sessions have it from step 0.3 onward; step 3.1 upgrades its two provisional lines once `/ship`/`/verify-ui` exist). This section holds the authoritative template for both — it's the dual-tool split (Codex twin, hooks, skills symlink) that's actually new here, not the file itself.
 
 `AGENTS.md` (repo root) — the shared file both tools read:
 
@@ -1099,7 +1126,7 @@ and the tool-neutral workflow rules. Everything there applies.
   and the feature-branch + PR flow
 ```
 
-Commit both (`AGENTS.md` already is; `CLAUDE.md` lands with step 3.1).
+Commit both (`AGENTS.md` already is; `CLAUDE.md` already is too, as of step 0.2b — step 3.1 just upgrades its two provisional lines to this final form once `/ship`/`/verify-ui` exist).
 
 **Reason:** Codex reads `AGENTS.md` from the repo root natively (it's the open agents.md standard — Codex's `/init` even generates one); Claude Code reads `CLAUDE.md` and imports the shared file. One source of truth, zero drift between tools — the same *context engineering* principle, now tool-agnostic.
 
@@ -1229,7 +1256,7 @@ Rules that make this safe:
 
 ### Dual-tool additions to the migration checklist
 
-- [ ] 8.1 Split instructions: full shared `AGENTS.md` + slim importing `CLAUDE.md` — 10 min
+- [x] 8.1 Split instructions: full shared `AGENTS.md` + slim importing `CLAUDE.md` — already done via steps 0.2 and 0.2b, ahead of the rest of Part 8
 - [ ] 8.2 `.codex/config.toml` (sandbox, approvals, Playwright MCP) — 5 min
 - [ ] 8.3 `.codex/hooks.json` + `lint-modified.sh` — 10 min
 - [ ] 8.4 `.agents/skills` symlink; verify `/skills` in Codex — 5 min

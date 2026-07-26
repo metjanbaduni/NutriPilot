@@ -8,7 +8,7 @@
             "Arn"
           ],
           "category": "function",
-          "resourceName": "nutripilotFunction"
+          "resourceName": "profileFunction"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -44,11 +44,6 @@
     }
   },
   "function": {
-    "nutripilotFunction": {
-      "build": true,
-      "providerPlugin": "awscloudformation",
-      "service": "Lambda"
-    },
     "nutripilotnutripilotLambdaLib": {
       "build": true,
       "providerPlugin": "awscloudformation",
@@ -79,22 +74,6 @@
     }
   },
   "parameters": {
-    "AMPLIFY_function_nutripilotFunction_deploymentBucketName": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "nutripilotFunction"
-        }
-      ]
-    },
-    "AMPLIFY_function_nutripilotFunction_s3Key": {
-      "usedBy": [
-        {
-          "category": "function",
-          "resourceName": "nutripilotFunction"
-        }
-      ]
-    },
     "AMPLIFY_function_nutripilotnutripilotLambdaLib_deploymentBucketName": {
       "usedBy": [
         {

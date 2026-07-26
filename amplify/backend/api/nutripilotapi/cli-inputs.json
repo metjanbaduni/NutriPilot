@@ -1,17 +1,11 @@
 {
   "version": 1,
   "paths": {
-    "/api": {
-      "name": "/api",
-      "lambdaFunction": "nutripilotFunction",
+    "/profile": {
+      "name": "/profile",
+      "lambdaFunction": "profileFunction",
       "permissions": {
-        "setting": "private",
-        "auth": [
-          "create",
-          "read",
-          "update",
-          "delete"
-        ]
+        "setting": "open"
       }
     }
   }

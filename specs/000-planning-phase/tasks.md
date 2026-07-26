@@ -202,24 +202,39 @@ Tests are required to maintain ≥80% coverage per .specify/memory/constitution.
       after the push — `amplify push` installs a `src/node_modules/` inside the function that
       hijacked Jest's `@aws-sdk` resolution; fixed by the `^@aws-sdk/(.*)$` mapper in
       `jest.config.js`. Still outstanding for T046: Phases 3 and 4, and the live smoke test.
-    - Phase 3 [NOT STARTED, user runs]: `amplify update api` — add `/profile` path bound to
+    - Phase 3 [DONE 2026-07-26, user ran]: `amplify update api` — added `/profile` bound to
       `profileFunction` (Restrict API access: **No** — real auth comes from Phase 4's override,
-      not Amplify's built-in IAM/SigV4 restriction, which is the wrong auth model here); remove
-      the `/api` path. Then `amplify remove function nutripilotFunction` (audit finding C2:
-      unmodified echo boilerplate, wildcard CORS, nothing references it).
+      not Amplify's built-in IAM/SigV4 restriction, which is the wrong auth model here); removed
+      the `/api` path; `amplify remove function nutripilotFunction` (audit finding C2: unmodified
+      echo boilerplate, wildcard CORS, nothing references it). Result: `cli-inputs.json` has
+      `/profile` only, with `"setting": "open"`; `api.dependsOn` lists only `profileFunction`.
+      Note the plan's "loop back to Remove path" was wrong — the add sub-flow exits after
+      "add another path? No", so removing `/api` needed a second `amplify update api` run.
+      Nothing pushed: Phase 3 is local config only, and pushing it alone would briefly expose
+      `/profile` with no authorizer. One push at the end of Phase 4 instead.
     - Phase 4 [NOT STARTED, user runs, I write the override]: `amplify override api` (scaffolds
       `override.ts`) → write it to attach a real `COGNITO_USER_POOLS` authorizer to `/profile`,
       referencing the `nutripilot9b62e7df` user pool. Amplify's default "Restrict API access"
       flow only produces AWS_IAM/SigV4 auth, which does not match what `getProfile.js`/
       `updateProfile.js` read from `event.requestContext.authorizer.claims.sub`, nor what
-      `openapi.yaml`'s `cognitoJwt` bearer/JWT security declares. Before `amplify push`: inspect
-      the synthesized CFN for `/profile`'s method and confirm `AuthorizationType` + `AuthorizerId`
-      resolve to a COGNITO_USER_POOLS authorizer with the real user pool ARN in `ProviderARNs` —
-      not just an authorizer resource that exists but isn't attached. After push: verify the
-      deployed layer's zip actually contains real files (not a broken symlink) via
-      `aws lambda get-layer-version` + `unzip -p ... | grep`.
-
-     run the post-push layer verification above, THEN start Phase 3 — do not skip the layer verification before Phase 3.
+      `openapi.yaml`'s `cognitoJwt` bearer/JWT security declares.
+      **Verification before `amplify push`** (revised 2026-07-26 — the original wording assumed a
+      structure this API does not have): the REST API is a single `AWS::ApiGateway::RestApi` whose
+      `Body` holds inline swagger. There are no `AWS::ApiGateway::Method` / `::Resource` /
+      `::Authorizer` resources, so there is **no `AuthorizerId` to trace** — API Gateway creates
+      the authorizer from an `x-amazon-apigateway-authorizer` extension at import time. Instead,
+      inspect the synthesized template's swagger body and confirm BOTH:
+      (1) `securityDefinitions` contains an entry with
+      `"x-amazon-apigateway-authtype": "cognito_user_pools"` whose `providerARNs` holds the real
+      user pool ARN (`arn:aws:cognito-idp:us-east-1:880079111164:userpool/us-east-1_EgiqTyXNa`);
+      (2) every `/profile` path key — expect `/profile` AND a `/profile/{proxy+}` sibling, since
+      `/api` generated both — carries `security: [{<that definition>: []}]` on its
+      `x-amazon-apigateway-any-method`. The `options` method must NOT carry it, or CORS preflight
+      breaks. Requirement (2) is the point: a security definition that exists but isn't referenced
+      by any method leaves the route wide open.
+      After push: verify the deployed layer's zip actually contains real files (not a broken
+      symlink) — currently via the local-artifact proxy documented in AGENTS.md, since the deploy
+      user lacks `lambda:GetLayerVersion` (backlog T051).
   - Tests: existing `tests/lambdas/*.test.js` still pass; manual smoke per docs/manual_testing/profile-onboarding.md
   - Acceptance: GET and POST /profile return live 200s with the DTO shape from a signed-in session;
     settings screen round-trips against real AWS; US2 Independent Test executed and passing.
@@ -441,6 +456,19 @@ no longer exist.
   - Acceptance: `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev
     --version-number <n>` succeeds under the `nutripilot` profile, and the documented
     verification in docs/agentic-workflow-v3.md step 0.4b runs end to end.
+
+- [ ] T053 Make the Cognito user pool ARN in `api/nutripilotapi/override.ts` environment-portable
+  - Notes: **Only act on this when a second Amplify environment (e.g. `prod`) is actually added —
+    until then it is correct as-is and should be left alone.** T046 Phase 4 hardcodes the `dev`
+    pool ID as a loud, commented constant in the override, because the API stack has no `dependsOn`
+    on auth and therefore no CFN parameter to `Ref`. The only interactive CLI route that adds that
+    dependency is "Restrict API access → Yes", which re-introduces the IAM/SigV4 security the
+    override exists to avoid — so hand-wiring an auth dependency in `backend-config.json` (plus
+    composing the ARN via `Fn::Sub` from region/account) is the likely fix, against the repo's
+    prefer-CLI-flows convention. Symptom if forgotten: a second environment silently authorizes
+    against `dev`'s user pool, so its tokens are rejected and every `/profile` call 401s.
+  - Acceptance: `amplify env add` a second env, and `/profile` in that env authorizes against that
+    env's own pool with no source edit between environments.
 
 - [ ] T052 Extend `collectCoverageFrom` in `jest.config.js` to cover Lambda handler code
   - Notes: Pre-existing gap, NOT caused by T046 — logged during the T046 audit. Coverage is

@@ -18,13 +18,6 @@ export type AmplifyDependentResourcesAttributes = {
     }
   },
   "function": {
-    "nutripilotFunction": {
-      "Arn": "string",
-      "LambdaExecutionRole": "string",
-      "LambdaExecutionRoleArn": "string",
-      "Name": "string",
-      "Region": "string"
-    },
     "nutripilotnutripilotLambdaLib": {
       "Arn": "string"
     },

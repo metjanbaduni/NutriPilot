@@ -108,6 +108,24 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   requires reachable via the layer's own `node_modules` walk, not the function's.
   Jest resolves the layer's `nutripilot-lambda-lib/*` requires via a `moduleNameMapper` entry
   in `jest.config.js` pointing at the source dir directly (there's no `/opt/nodejs` locally).
+- `amplify push` runs `npm install` inside each function's `src/`, leaving a gitignored
+  `<function>/src/node_modules/` behind as a packaging artifact. Symptom: a Lambda test that
+  passed before the push fails after it with `SyntaxError: Unexpected token 'export'` — root
+  cause: Jest resolves the handler's `require()` from that nearer `node_modules` instead of the
+  root one, getting an untransformed-ESM copy. The quieter half of the same bug is that even a
+  parseable copy is a *different module instance* than the one the test mocks, so
+  `aws-sdk-client-mock` silently fails to bind. Fixed for `@aws-sdk/*` by a `moduleNameMapper`
+  entry pinning it to `<rootDir>/node_modules`; any future function that directly requires some
+  other package needs the same treatment. **Re-run `npm run verify` after every `amplify push`,
+  not just the first** — a clean `git status` proves nothing here, because the artifact is
+  gitignored. (`modulePathIgnorePatterns` does not work for this; it is not consulted for
+  node_modules resolution.)
+- The `amplify-nutripilot` IAM user lacks `lambda:ListLayers` and `lambda:GetLayerVersion`, so
+  post-push layer verification cannot read the deployed zip directly (`get-function-configuration`
+  IS permitted and does work). Current workaround: inspect
+  `amplify/#current-cloud-backend/function/<name>/dist/latest-build.zip` and confirm its byte
+  size equals the `CodeSize` AWS reports — a proxy, not a direct AWS read. Backlog task T051
+  grants the missing permissions.
 
 ## Workflow rules (any agent)
 - For non-trivial work: propose a plan and WAIT for explicit approval before editing files

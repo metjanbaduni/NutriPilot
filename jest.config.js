@@ -4,7 +4,13 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^nutripilot-lambda-lib/(.*)$':
-      '<rootDir>/amplify/backend/function/nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/$1'
+      '<rootDir>/amplify/backend/function/nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/$1',
+    // Pin the AWS SDK to the root install. `amplify push` runs `npm install` inside each
+    // function's src/, leaving a gitignored node_modules/ there; without this, a handler's
+    // require() resolves to that copy, which ships untransformed ESM (Jest cannot parse it)
+    // and would hand tests a different module instance than the one aws-sdk-client-mock
+    // mocks. Root carries every @aws-sdk package the handlers need.
+    '^@aws-sdk/(.*)$': '<rootDir>/node_modules/@aws-sdk/$1'
   },
   transform: {
     '^.+\\.[jt]sx?$': 'babel-jest'

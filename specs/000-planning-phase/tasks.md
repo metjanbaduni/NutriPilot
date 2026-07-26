@@ -192,10 +192,16 @@ Tests are required to maintain ≥80% coverage per .specify/memory/constitution.
       packed via `npm pack` into a `.tgz` consumed as a `file:` tarball dependency by the layer's
       `lib/nodejs/package.json` — deliberately not a raw `file:` directory reference (npm
       symlinks those, confirmed empirically; Amplify's zip-step symlink handling is unverified;
-      a tarball install always extracts a real copy). `npm run verify` passes (15/15 suites,
-      98/98 tests, coverage above threshold). Old unregistered `getProfile/`, `updateProfile/`,
-      `lib/` directories removed. As of 2026-07-26 end of session: nothing committed to git —
-      working tree has staged deletes plus unstaged/untracked changes for all of the above.
+      a tarball install always extracts a real copy). Old unregistered `getProfile/`,
+      `updateProfile/`, `lib/` directories removed.
+      State as of the 2026-07-26 post-push audit: Phases 1–2 are committed (`327b366`, `66c6b75`)
+      and `amplify push` has run — `profileFunction-dev` is live with layer version 1 attached,
+      and the deployed layer zip was confirmed to contain real JavaScript at
+      `nodejs/node_modules/nutripilot-lambda-lib/` as regular files, not symlinks. `npm run verify`
+      is green: 15/15 suites, 98/98 tests, exit 0. Note that verify was briefly red immediately
+      after the push — `amplify push` installs a `src/node_modules/` inside the function that
+      hijacked Jest's `@aws-sdk` resolution; fixed by the `^@aws-sdk/(.*)$` mapper in
+      `jest.config.js`. Still outstanding for T046: Phases 3 and 4, and the live smoke test.
     - Phase 3 [NOT STARTED, user runs]: `amplify update api` — add `/profile` path bound to
       `profileFunction` (Restrict API access: **No** — real auth comes from Phase 4's override,
       not Amplify's built-in IAM/SigV4 restriction, which is the wrong auth model here); remove
@@ -424,6 +430,26 @@ no longer exist.
 ### Backlog (un-groomed — groom before scheduling)
 
 - [ ] T049 Add "Nutritionist Analysis" section to the dashboard (AI guidance deferred from US3; requires API contract change, backend work, and UI — no field for it exists in the dashboard DTO today)
+
+- [ ] T051 Grant the `amplify-nutripilot` IAM user `lambda:ListLayers` + `lambda:GetLayerVersion`
+  - Notes: Surfaced by the T046 post-push audit. Without these, post-push layer verification
+    cannot read the deployed zip from AWS and has to fall back to comparing the local
+    `amplify/#current-cloud-backend/.../dist/latest-build.zip` byte size against the `CodeSize`
+    from `get-function-configuration` (which IS permitted). That proxy is decent evidence but
+    not a direct read, and every future layer-backed task (T027, T037–T040) inherits the gap.
+    Read-only permissions on a dev account; not blocking any current task.
+  - Acceptance: `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev
+    --version-number <n>` succeeds under the `nutripilot` profile, and the documented
+    verification in docs/agentic-workflow-v3.md step 0.4b runs end to end.
+
+- [ ] T052 Extend `collectCoverageFrom` in `jest.config.js` to cover Lambda handler code
+  - Notes: Pre-existing gap, NOT caused by T046 — logged during the T046 audit. Coverage is
+    currently collected from `src/**` only, so `amplify/backend/function/**` handlers and the
+    shared lib at `nutripilot-lambda-lib-src/` contribute nothing to the reported numbers. The
+    headline "95% / 83% branches" therefore describes the frontend alone; the constitution's
+    80%/75% gate is not actually being enforced on any backend code. Expect the global
+    percentages to move once these files enter the denominator — check the thresholds still
+    hold, and treat a drop as real signal rather than lowering the gate.
 
 ---
 

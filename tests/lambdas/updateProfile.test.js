@@ -2,7 +2,7 @@ jest.mock('sinon', () => require('sinon/lib/sinon'));
 
 const { mockClient } = require('aws-sdk-client-mock');
 const { DynamoDBDocumentClient, GetCommand, PutCommand } = require('@aws-sdk/lib-dynamodb');
-const { handler } = require('../../amplify/backend/function/updateProfile/src/index');
+const { handler } = require('../../amplify/backend/function/profileFunction/src/updateProfile');
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
 

@@ -176,6 +176,44 @@ Tests are required to maintain ≥80% coverage per .specify/memory/constitution.
     authorizer; decide nutripilotFunction's fate (implement as router or remove); amplify push.
     The routing pattern decided here (router Lambda vs one function per path) is reused by all
     later backend wiring (T027, T037–T040) — record the decision in docs/decisions/.
+
+    Execution plan (as of 2026-07-26), four phases. Full rationale for the routing/auth/packaging
+    decisions is in `docs/decisions/0001-lambda-routing-auth-shared-code.md`.
+    - Phase 1 [DONE]: `amplify add function` scaffolded `profileFunction` (Hello World template,
+      NodeJS); storage access granted to NutriPilotTable (create/read/update) via `amplify update
+      function`. Added Lambda layer `nutripilotnutripilotLambdaLib` for shared code — Amplify's
+      actual generated name (doubled "nutripilot" prefix, not a typo). T027/T037–T040 should
+      attach this same layer rather than repeating the setup.
+    - Phase 2 [DONE]: handler code written —
+      `profileFunction/src/index.js` (dispatches GET→getProfile.js, POST→updateProfile.js, else
+      405 — Amplify binds one Lambda per API path via ANY method, so multi-verb paths need this
+      dispatcher shape), `getProfile.js`, `updateProfile.js`. Shared `dynamoClient.js`/
+      `calculateMacros.js` live at `nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/`,
+      packed via `npm pack` into a `.tgz` consumed as a `file:` tarball dependency by the layer's
+      `lib/nodejs/package.json` — deliberately not a raw `file:` directory reference (npm
+      symlinks those, confirmed empirically; Amplify's zip-step symlink handling is unverified;
+      a tarball install always extracts a real copy). `npm run verify` passes (15/15 suites,
+      98/98 tests, coverage above threshold). Old unregistered `getProfile/`, `updateProfile/`,
+      `lib/` directories removed. As of 2026-07-26 end of session: nothing committed to git —
+      working tree has staged deletes plus unstaged/untracked changes for all of the above.
+    - Phase 3 [NOT STARTED, user runs]: `amplify update api` — add `/profile` path bound to
+      `profileFunction` (Restrict API access: **No** — real auth comes from Phase 4's override,
+      not Amplify's built-in IAM/SigV4 restriction, which is the wrong auth model here); remove
+      the `/api` path. Then `amplify remove function nutripilotFunction` (audit finding C2:
+      unmodified echo boilerplate, wildcard CORS, nothing references it).
+    - Phase 4 [NOT STARTED, user runs, I write the override]: `amplify override api` (scaffolds
+      `override.ts`) → write it to attach a real `COGNITO_USER_POOLS` authorizer to `/profile`,
+      referencing the `nutripilot9b62e7df` user pool. Amplify's default "Restrict API access"
+      flow only produces AWS_IAM/SigV4 auth, which does not match what `getProfile.js`/
+      `updateProfile.js` read from `event.requestContext.authorizer.claims.sub`, nor what
+      `openapi.yaml`'s `cognitoJwt` bearer/JWT security declares. Before `amplify push`: inspect
+      the synthesized CFN for `/profile`'s method and confirm `AuthorizationType` + `AuthorizerId`
+      resolve to a COGNITO_USER_POOLS authorizer with the real user pool ARN in `ProviderARNs` —
+      not just an authorizer resource that exists but isn't attached. After push: verify the
+      deployed layer's zip actually contains real files (not a broken symlink) via
+      `aws lambda get-layer-version` + `unzip -p ... | grep`.
+
+     run the post-push layer verification above, THEN start Phase 3 — do not skip the layer verification before Phase 3.
   - Tests: existing `tests/lambdas/*.test.js` still pass; manual smoke per docs/manual_testing/profile-onboarding.md
   - Acceptance: GET and POST /profile return live 200s with the DTO shape from a signed-in session;
     settings screen round-trips against real AWS; US2 Independent Test executed and passing.

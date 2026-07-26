@@ -55,7 +55,10 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
 - Deployed API has ONE route: /api → nutripilotFunction (boilerplate echo). getProfile/updateProfile
   are NOT registered and /profile is NOT a real route yet — T046 fixes this. A backend task is NOT
   done until the real endpoint answers.
-- `calculateMacros` is duplicated in `src/utils/` and `amplify/backend/function/lib/` — change both or neither.
+- `calculateMacros` is duplicated in `src/utils/` and
+  `amplify/backend/function/nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/`
+  (packaged as a Lambda layer, shared by all Lambda functions via the `nutripilot-lambda-lib`
+  module) — change both or neither.
 - CI (`.github/workflows/ci.yml`, added by T048) runs `npm run verify && npm run build` on every
   push and PR to main.
 - eslint.config.js's base block previously had no `files` key, silently excluding
@@ -75,6 +78,22 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   task, not fixed now.
 - The previous Codex/Copilot workflow (prompt scripts, spec-kit templates, per-story architecture
   docs) is archived under `docs/archive/` — do not follow anything in there.
+- Shared Lambda code lives in the `nutripilotnutripilotLambdaLib` Lambda layer (name has a
+  doubled "nutripilot" prefix — that's what Amplify actually generated, not a typo). Source of
+  truth is `.../lib/nutripilot-lambda-lib-src/` — plain files, a completely normal (non-
+  `node_modules`) git-tracked and lint-covered path, no ignore-pattern tricks needed. It's
+  packed via `npm pack` into a `.tgz` and consumed by the layer's `lib/nodejs/package.json` as
+  a `file:` tarball dependency — deliberately NOT a `file:` directory reference, because npm
+  symlinks directory `file:` deps (confirmed empirically) and Amplify's Lambda zip step's
+  handling of symlinks is unverified; installing from a `.tgz` always extracts a real copy.
+  `lib/nodejs/node_modules/nutripilot-lambda-lib/` (the npm-extracted copy) is a build artifact,
+  correctly gitignored like any other installed dependency — never edit it directly, only
+  `nutripilot-lambda-lib-src/`.
+  Any function consuming this layer needs its own directly-`require`d packages (e.g.
+  `@aws-sdk/lib-dynamodb`) declared in its own `src/package.json` too — the layer only covers
+  requires reachable via the layer's own `node_modules` walk, not the function's.
+  Jest resolves the layer's `nutripilot-lambda-lib/*` requires via a `moduleNameMapper` entry
+  in `jest.config.js` pointing at the source dir directly (there's no `/opt/nodejs` locally).
 
 ## Workflow rules (any agent)
 - For non-trivial work: propose a plan and WAIT for explicit approval before editing files

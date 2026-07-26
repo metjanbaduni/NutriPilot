@@ -1,5 +1,5 @@
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb');
-const { getDynamoDocClient, getTableName } = require('../../lib/dynamoClient');
+const { getDynamoDocClient, getTableName } = require('nutripilot-lambda-lib/dynamoClient');
 
 const PROFILE_SK = 'PROFILE';
 const TARGETS_SK = 'TARGETS';
@@ -76,7 +76,7 @@ async function fetchUserProfileItems(userSub) {
 
 /**
  * Returns the authenticated user's profile and target records.
- * @param {import('aws-lambda').APIGatewayProxyEventV2} event - API Gateway event.
+ * @param {import('aws-lambda').APIGatewayProxyEvent} event - API Gateway event.
  * @returns {Promise<import('aws-lambda').APIGatewayProxyResult>} API response payload.
  */
 exports.handler = async (event) => {

@@ -11,11 +11,10 @@ jest.mock('@aws-sdk/lib-dynamodb', () => ({
   },
 }));
 
-const {
-  getAwsRegion,
-  getTableName,
-  getDynamoDocClient,
-} = require('../../amplify/backend/function/lib/dynamoClient');
+const LAMBDA_LIB_SRC = '../../amplify/backend/function/nutripilotnutripilotLambdaLib/lib';
+const { getAwsRegion, getTableName, getDynamoDocClient } = require(
+  `${LAMBDA_LIB_SRC}/nutripilot-lambda-lib-src/dynamoClient`
+);
 
 describe('dynamoClient helpers', () => {
   const ORIGINAL_ENV = { ...process.env };
@@ -61,6 +60,19 @@ describe('dynamoClient helpers', () => {
 
     // Assert
     expect(result).toBe('us-east-1');
+  });
+
+  test('getTableName prefers STORAGE_NUTRIPILOTTABLE_NAME (Amplify storage-grant env var)', () => {
+    // Arrange
+    process.env.STORAGE_NUTRIPILOTTABLE_NAME = 'NutriPilotTable-dev';
+    process.env.NUTRIPILOT_TABLE_NAME = 'Fallback';
+    process.env.TABLE_NAME = 'Fallback';
+
+    // Act
+    const result = getTableName();
+
+    // Assert
+    expect(result).toBe('NutriPilotTable-dev');
   });
 
   test('getTableName returns NUTRIPILOT_TABLE_NAME when set', () => {

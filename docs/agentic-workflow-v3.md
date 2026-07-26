@@ -141,7 +141,7 @@ Some vocabulary first: **API Gateway** is the AWS service that gives your Lambda
 
 **Instruction:** Fresh session (`/clear` or restart). Plan Mode. Paste:
 
-> Implement task T046 from specs/000-planning-phase/tasks.md. Context: the audit (docs/audit-2026-07-11.md, finding C1) confirmed getProfile and updateProfile exist only as source under amplify/backend/function/ — they are not in backend-config.json, not in amplify-meta.json, and API Gateway has no /profile route. The frontend calls GET/POST /profile via src/api/client.js. Plan how to register both functions with Amplify and route /profile (GET and POST) through the Cognito authorizer, and what to do with nutripilotFunction (the boilerplate echo — recommend removal unless you find a reason to keep it). Prefer the official Amplify CLI flows (amplify add function / amplify update api) over hand-editing generated config files, and tell me exactly which interactive CLI commands I need to run myself and what to answer at each prompt. Do not run amplify push yourself — I will run it.
+> Implement task T046 from specs/000-planning-phase/tasks.md. Context: the audit (docs/audit-2026-07-11.md, finding C1) confirmed getProfile and updateProfile exist only as source under amplify/backend/function/ — they are not in backend-config.json, not in amplify-meta.json, and API Gateway has no /profile route. The frontend calls GET/POST /profile via src/api/client.js. Plan how to register both functions with Amplify and route /profile (GET and POST) through the Cognito authorizer, and what to do with nutripilotFunction (the boilerplate echo — recommend removal unless you find a reason to keep it). Prefer the official Amplify CLI flows (amplify add function / amplify update api) over hand-editing generated config files, and tell me exactly which interactive CLI commands I need to run myself and what to answer at each prompt. Do not run amplify push yourself — I will run it in a separate terminal session.
 
 The Amplify CLI asks interactive questions that Claude cannot answer in a terminal it doesn't control, so expect this session to be a **pair exercise**: Claude tells you the command and the answers; you run it by typing `! <command>` in the Claude Code prompt (the `!` prefix runs it in your session so Claude sees the output) or in a separate terminal. When the config is ready, **you** run `amplify push` and paste the result.
 
@@ -973,7 +973,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 **CODE TRACK (sequential; parallel with the design track):**
 
-- [ ] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
+- [x] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
 - [ ] 0.4 T046: backend wiring + live smoke test — Claude session (pair exercise for Amplify CLI)
 - [ ] 0.5 T047: error messages — Claude session; open the cleanup PR; merge when CI is green
 

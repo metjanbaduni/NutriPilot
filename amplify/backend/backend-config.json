@@ -48,6 +48,34 @@
       "build": true,
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    },
+    "nutripilotnutripilotLambdaLib": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "LambdaLayer"
+    },
+    "profileFunction": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "nutripilotnutripilotLambdaLib"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn",
+            "StreamArn"
+          ],
+          "category": "storage",
+          "resourceName": "NutriPilotTable"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "parameters": {
@@ -64,6 +92,38 @@
         {
           "category": "function",
           "resourceName": "nutripilotFunction"
+        }
+      ]
+    },
+    "AMPLIFY_function_nutripilotnutripilotLambdaLib_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nutripilotnutripilotLambdaLib"
+        }
+      ]
+    },
+    "AMPLIFY_function_nutripilotnutripilotLambdaLib_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "nutripilotnutripilotLambdaLib"
+        }
+      ]
+    },
+    "AMPLIFY_function_profileFunction_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "profileFunction"
+        }
+      ]
+    },
+    "AMPLIFY_function_profileFunction_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "profileFunction"
         }
       ]
     }

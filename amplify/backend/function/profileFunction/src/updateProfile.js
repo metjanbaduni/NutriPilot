@@ -1,6 +1,6 @@
 const { GetCommand, PutCommand } = require('@aws-sdk/lib-dynamodb');
-const { calculateMacros } = require('../../lib/calculateMacros');
-const { getDynamoDocClient, getTableName } = require('../../lib/dynamoClient');
+const { calculateMacros } = require('nutripilot-lambda-lib/calculateMacros');
+const { getDynamoDocClient, getTableName } = require('nutripilot-lambda-lib/dynamoClient');
 
 const PROFILE_SK = 'PROFILE';
 const TARGETS_SK = 'TARGETS';
@@ -122,7 +122,7 @@ function toTargetsDto(targetsItem) {
 
 /**
  * Updates user profile and recalculates targets for the authenticated user.
- * @param {import('aws-lambda').APIGatewayProxyEventV2} event - API Gateway event payload.
+ * @param {import('aws-lambda').APIGatewayProxyEvent} event - API Gateway event payload.
  * @returns {Promise<import('aws-lambda').APIGatewayProxyResult>} Update response.
  */
 exports.handler = async (event) => {

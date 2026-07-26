@@ -2,7 +2,9 @@ module.exports = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1'
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^nutripilot-lambda-lib/(.*)$':
+      '<rootDir>/amplify/backend/function/nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/$1'
   },
   transform: {
     '^.+\\.[jt]sx?$': 'babel-jest'

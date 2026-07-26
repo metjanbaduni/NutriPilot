@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "storage": {
+      "NutriPilotTable": [
+        "create",
+        "read",
+        "update"
+      ]
+    }
+  },
+  "lambdaLayers": [
+    {
+      "type": "ProjectLayer",
+      "resourceName": "nutripilotnutripilotLambdaLib",
+      "env": "dev",
+      "version": "Always choose latest version",
+      "isLatestVersionSelected": true
+    }
+  ]
+}

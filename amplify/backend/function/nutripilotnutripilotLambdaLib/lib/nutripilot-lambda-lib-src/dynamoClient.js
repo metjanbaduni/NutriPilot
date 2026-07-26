@@ -2,7 +2,7 @@ const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
 
 const DEFAULT_REGION = 'us-east-1';
-const TABLE_NAME_ENV_KEYS = ['NUTRIPILOT_TABLE_NAME', 'TABLE_NAME'];
+const TABLE_NAME_ENV_KEYS = ['STORAGE_NUTRIPILOTTABLE_NAME', 'NUTRIPILOT_TABLE_NAME', 'TABLE_NAME'];
 const MISSING_TABLE_NAME_MESSAGE = 'DynamoDB table name is required';
 
 function isNonEmptyString(value) {

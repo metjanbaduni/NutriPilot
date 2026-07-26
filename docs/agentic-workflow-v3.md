@@ -986,8 +986,8 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 **CODE TRACK (sequential; parallel with the design track):**
 
 - [x] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
-- [ ] 0.4 T046: backend wiring + live smoke test — Claude session (pair exercise for Amplify CLI)
-- [ ] 0.4b T051: grant `amplify-nutripilot` `lambda:ListLayers` + `lambda:GetLayerVersion` — by hand, non-blocking
+- [x] 0.4 T046: backend wiring + live smoke test — done 2026-07-27, `/profile` live behind a Cognito authorizer, GET+POST verified in the browser
+- [ ] 0.4b T051: grant `amplify-nutripilot` `lambda:ListLayers`, `lambda:GetLayerVersion` + `apigateway:GET` — by hand, non-blocking
 - [ ] 0.5 T047: error messages — Claude session; open the cleanup PR; merge when CI is green
 
 **DESIGN TRACK (sequential; parallel with the code track):**

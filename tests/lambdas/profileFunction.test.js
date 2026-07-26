@@ -10,6 +10,8 @@ const { handler } = require(`${PROFILE_FUNCTION_SRC}/index`);
 const { handler: getProfile } = require(`${PROFILE_FUNCTION_SRC}/getProfile`);
 const { handler: updateProfile } = require(`${PROFILE_FUNCTION_SRC}/updateProfile`);
 
+const CORS_ORIGIN_HEADER = 'Access-Control-Allow-Origin';
+
 describe('profileFunction dispatcher', () => {
   beforeEach(() => {
     getProfile.mockClear();
@@ -26,7 +28,11 @@ describe('profileFunction dispatcher', () => {
     // Assert
     expect(getProfile).toHaveBeenCalledWith(event);
     expect(updateProfile).not.toHaveBeenCalled();
-    expect(response).toEqual({ statusCode: 200, body: 'get' });
+    expect(response).toEqual({
+      statusCode: 200,
+      body: 'get',
+      headers: { [CORS_ORIGIN_HEADER]: '*' },
+    });
   });
 
   test('routes POST requests to the updateProfile handler', async () => {
@@ -39,7 +45,11 @@ describe('profileFunction dispatcher', () => {
     // Assert
     expect(updateProfile).toHaveBeenCalledWith(event);
     expect(getProfile).not.toHaveBeenCalled();
-    expect(response).toEqual({ statusCode: 200, body: 'post' });
+    expect(response).toEqual({
+      statusCode: 200,
+      body: 'post',
+      headers: { [CORS_ORIGIN_HEADER]: '*' },
+    });
   });
 
   test('returns 405 for unsupported methods', async () => {
@@ -55,5 +65,42 @@ describe('profileFunction dispatcher', () => {
     expect(parsedBody).toEqual({ success: false, message: 'Method not allowed' });
     expect(getProfile).not.toHaveBeenCalled();
     expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  // The /profile integration is aws_proxy, so API Gateway returns this Lambda's
+  // response verbatim. A missing Allow-Origin header is invisible server-side —
+  // the request succeeds with 200 and the browser withholds it from JS — so every
+  // dispatch path is asserted explicitly.
+  test.each([['GET'], ['POST'], ['DELETE']])(
+    'returns the CORS allow-origin header for %s',
+    async (httpMethod) => {
+      // Arrange
+      const event = { httpMethod };
+
+      // Act
+      const response = await handler(event);
+
+      // Assert
+      expect(response.headers[CORS_ORIGIN_HEADER]).toBe('*');
+    }
+  );
+
+  test('preserves handler-supplied headers alongside the CORS header', async () => {
+    // Arrange
+    const event = { httpMethod: 'GET' };
+    getProfile.mockResolvedValueOnce({
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+
+    // Act
+    const response = await handler(event);
+
+    // Assert
+    expect(response.headers).toEqual({
+      'Content-Type': 'application/json',
+      [CORS_ORIGIN_HEADER]: '*',
+    });
   });
 });

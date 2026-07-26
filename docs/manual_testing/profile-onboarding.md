@@ -61,6 +61,36 @@ Verify that authenticated users can load and update their profile, recalculate m
    - a `PROFILE` item (updated fields)
    - a `TARGETS` item (recalculated macros)
 
+## Execution Record
+
+### 2026-07-27 — executed against dev environment, passing
+
+Executed after T046 deployed the real backend (`amplify push`). This is the first run against
+live AWS rather than mocks — the DoD line for T046.
+
+**Both GET and POST confirmed working end-to-end through the browser.** Save shows the success
+message with recalculated targets, and a reload repopulates the form with the saved values
+(Case D and Case F).
+
+Endpoint: `https://2s2xf632ej.execute-api.us-east-1.amazonaws.com/dev/profile`
+(`GET`/`POST` → `profileFunction`, Cognito User Pool authorizer).
+
+Includes the CORS fix. Worth recording how that failed, because it is easy to misread: the first
+attempt's `POST` returned **200 server-side** — the Cognito authorizer accepted the real token and
+the handler wrote to DynamoDB — but the browser withheld the response from JS because the Lambda
+returned no `Access-Control-Allow-Origin` header. The network tab showed success while the page
+showed a network error. `/profile` uses an `aws_proxy` integration, so API Gateway returns the
+Lambda's response verbatim and that header has to come from the handler itself; it is now emitted
+by the dispatcher. Preflight was never the problem — Amplify's generated `OPTIONS` mock and the
+DEFAULT_4XX/5XX gateway responses were already correct.
+
+Also verified independently of the browser, before this run:
+
+- anonymous `GET /profile` → **401** `{"message":"Unauthorized"}` (authorizer rejecting)
+- anonymous `POST /profile` → **401**
+- `OPTIONS /profile` → **200** (preflight deliberately unauthenticated)
+- `GET /api` → **403** (the removed boilerplate route)
+
 ## Notes
 - If the ProfileForm is not yet wired to `/settings`, consider a temporary mount for validation and then revert.
 - If DynamoDB access is restricted, use API logs or CloudWatch to confirm successful writes.

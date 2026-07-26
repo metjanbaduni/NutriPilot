@@ -169,7 +169,7 @@ Tests are required to maintain ≥80% coverage per .specify/memory/constitution.
   - Tests: `tests/hooks/useProfile.test.js`
   - Acceptance: Verifies initial loading state, success hydration, error handling, and refetch trigger.
 
-- [ ] T046 [US2] Register profile Lambdas + API Gateway routes and deploy
+- [x] T046 [US2] Register profile Lambdas + API Gateway routes and deploy
   - Files: `amplify/backend/backend-config.json`, `amplify/backend/api/nutripilotapi/cli-inputs.json`,
     `amplify/backend/function/getProfile/*`, `amplify/backend/function/updateProfile/*`
   - Notes: Register getProfile/updateProfile with Amplify; add GET/POST /profile with Cognito
@@ -240,6 +240,28 @@ Tests are required to maintain ≥80% coverage per .specify/memory/constitution.
     settings screen round-trips against real AWS; US2 Independent Test executed and passing.
   - DoD: `npm run verify`; smoke test evidence noted in the manual test doc.
 
+  **DONE 2026-07-27.** Live smoke test passed against the dev environment — GET and POST both
+  round-trip through the browser, save shows the success message with recalculated targets, and a
+  reload repopulates the form. Evidence in `docs/manual_testing/profile-onboarding.md`.
+  `npm run verify` green (15/15 suites, 102/102 tests). What shipped:
+  - `profileFunction` with an `index.js` dispatcher routing GET→`getProfile.js`,
+    POST→`updateProfile.js`, else 405 — Amplify binds one Lambda per path via ANY method, so
+    multi-verb paths need this shape. Reused by T037–T040 (`/meals`).
+  - Lambda layer `nutripilotnutripilotLambdaLib` holding shared `dynamoClient.js` /
+    `calculateMacros.js`, packed via `npm pack` into a `.tgz` consumed as a `file:` tarball
+    dependency (not a raw directory reference — npm symlinks those). T027/T037–T040 attach this
+    same layer rather than repeating the setup.
+  - `/profile` bound to `profileFunction`, `/api` and the `nutripilotFunction` echo boilerplate
+    removed.
+  - `api/nutripilotapi/override.ts` attaching a `COGNITO_USER_POOLS` authorizer, because the REST
+    API is a single `CfnRestApi` with inline swagger and Amplify's own flow only offers IAM/SigV4.
+  - CORS: the dispatcher emits `Access-Control-Allow-Origin`, required because `/profile` uses an
+    `aws_proxy` integration and API Gateway returns the handler's response verbatim.
+  Full rationale for the routing, auth and packaging decisions:
+  `docs/decisions/0001-lambda-routing-auth-shared-code.md`.
+  Follow-on debt, none blocking: T051 (IAM read permissions for post-push verification), T053
+  (hardcoded dev pool ARN in the override), T027 (promote the CORS helper into the shared layer).
+
 **Checkpoint**: Users persist accurate macro targets and can revisit/edit details
 
 ---
@@ -263,6 +285,16 @@ Tests are required to maintain ≥80% coverage per .specify/memory/constitution.
     totals (the UI renders an EmptyState for this — see T031). Register the function and `GET /dashboard` with the Cognito
     authorizer per the routing pattern decided in T046; minimal IAM per constitution;
     `amplify push`.
+    **CORS — promote the helper to the shared layer here.** `/dashboard` will use an `aws_proxy`
+    integration like `/profile`, so API Gateway returns the Lambda's response verbatim and the
+    `Access-Control-Allow-Origin` header must be emitted by the handler itself. Amplify's
+    generated `OPTIONS` mock (preflight) and DEFAULT_4XX/5XX gateway responses already cover
+    everything else — do not try to fix this in `override.ts` or via swagger method responses,
+    which are inert under proxy integration. T046 put `withCorsHeaders` in
+    `profileFunction/src/index.js` deliberately, as a single-consumer stopgap; this task is the
+    second consumer, so move it into `nutripilot-lambda-lib-src/` (re-pack, new layer version)
+    and have both functions require it rather than copying it. Failure mode if skipped is
+    silent server-side: the request returns 200 and the browser withholds the response from JS.
   - Tests: `tests/lambdas/getDashboard.test.js` (mocked Dynamo: populated day, empty day,
     missing profile, missing auth)
   - Acceptance:

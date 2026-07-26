@@ -89,6 +89,20 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   `lib/nodejs/node_modules/nutripilot-lambda-lib/` (the npm-extracted copy) is a build artifact,
   correctly gitignored like any other installed dependency — never edit it directly, only
   `nutripilot-lambda-lib-src/`.
+- Any authored source placed under a node_modules/-shaped path (Lambda layers, vendored deps)
+  collides with three different tools' default node_modules handling at once: ESLint's default
+  ignore, git's default ignore, and npm's automatic pruning of undeclared packages. Check all
+  three before writing code there — don't discover them one at a time.
+- `file:` npm dependencies to a raw directory are symlinked, not copied (confirmed empirically),
+  which breaks once the consumer zips that directory for deployment. Pack with `npm pack` into a
+  `.tgz` and depend on the tarball instead — installing from an archive always extracts a real
+  copy, and it's a declared dependency so `npm install` won't prune it as extraneous. Full case
+  in `docs/decisions/0001-lambda-routing-auth-shared-code.md`.
+- `amplify function build` / `amplify build` only exercise packaging for resources that already
+  exist in AWS. For a brand-new, not-yet-pushed resource (e.g. a first-time Lambda layer) they
+  succeed trivially without testing anything — there's no local way to verify layer packaging
+  before a real `amplify push` on first-time creation. Budget for push-then-inspect, not
+  local-verify-then-push.
   Any function consuming this layer needs its own directly-`require`d packages (e.g.
   `@aws-sdk/lib-dynamodb`) declared in its own `src/package.json` too — the layer only covers
   requires reachable via the layer's own `node_modules` walk, not the function's.

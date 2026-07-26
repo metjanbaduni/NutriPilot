@@ -446,15 +446,29 @@ no longer exist.
 
 - [ ] T049 Add "Nutritionist Analysis" section to the dashboard (AI guidance deferred from US3; requires API contract change, backend work, and UI — no field for it exists in the dashboard DTO today)
 
-- [ ] T051 Grant the `amplify-nutripilot` IAM user `lambda:ListLayers` + `lambda:GetLayerVersion`
-  - Notes: Surfaced by the T046 post-push audit. Without these, post-push layer verification
-    cannot read the deployed zip from AWS and has to fall back to comparing the local
-    `amplify/#current-cloud-backend/.../dist/latest-build.zip` byte size against the `CodeSize`
-    from `get-function-configuration` (which IS permitted). That proxy is decent evidence but
-    not a direct read, and every future layer-backed task (T027, T037–T040) inherits the gap.
+- [ ] T051 Grant the `amplify-nutripilot` IAM user the read permissions post-push verification needs
+  - Notes: Surfaced by the T046 post-push audit, then hit a second time during the T046 Phase 4
+    push verification. Three read-only actions are missing, all denied with
+    `AccessDeniedException` under the `nutripilot` profile:
+    - `lambda:ListLayers` and `lambda:GetLayerVersion` — needed to read a deployed layer's zip
+      and confirm it holds real files rather than a broken symlink (the exact failure mode the
+      tarball packaging exists to prevent).
+    - `apigateway:GET` — needed to read a deployed REST API's authorizers/methods and confirm an
+      authorizer is genuinely attached to a route, not merely defined.
+    Without them both checks fall back to the same proxy: read the local
+    `amplify/#current-cloud-backend/...` artifact and, for layers, compare its byte size against
+    the `CodeSize` from `get-function-configuration` (which IS permitted). That is decent
+    evidence but not a direct read — it compares a size, not a hash, and it reads a local file
+    rather than what AWS actually serves. Every future layer-backed or route-backed task
+    (T027, T037–T040) inherits the gap.
+    Note this is verification convenience only, not a correctness gap: for `/profile` the live
+    behavioural check (anonymous request → expect 401) proved the authorizer was attached
+    without needing `apigateway:GET` at all, and is arguably better evidence than a config read
+    since it tests runtime behaviour. Prefer that check where a route exists to probe.
     Read-only permissions on a dev account; not blocking any current task.
-  - Acceptance: `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev
-    --version-number <n>` succeeds under the `nutripilot` profile, and the documented
+  - Acceptance: under the `nutripilot` profile, both
+    `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev --version-number <n>`
+    and `aws apigateway get-authorizers --rest-api-id <id>` succeed, and the documented
     verification in docs/agentic-workflow-v3.md step 0.4b runs end to end.
 
 - [ ] T053 Make the Cognito user pool ARN in `api/nutripilotapi/override.ts` environment-portable

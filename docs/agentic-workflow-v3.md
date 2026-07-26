@@ -157,15 +157,17 @@ Then: `npm run verify && npm run build`, commit (`feat: register profile Lambdas
 
 **Verify:** the three-step smoke test above, plus: `python3 -c "import json; d=json.load(open('amplify/backend/backend-config.json')); print(list(d['function'].keys()))"` lists `getProfile` and `updateProfile`. The settings screen works with the browser's network tab showing real 200 responses from `amazonaws.com`.
 
-### Step 0.4b — Grant the deploy user Lambda layer read permissions *(by hand — T051, non-blocking)*
+### Step 0.4b — Grant the deploy user post-push read permissions *(by hand — T051, non-blocking)*
 
-**Instruction:** In the AWS console (or via a profile with IAM rights), attach `lambda:ListLayers` and `lambda:GetLayerVersion` to the `amplify-nutripilot` IAM user.
+**Instruction:** In the AWS console (or via a profile with IAM rights), attach `lambda:ListLayers`, `lambda:GetLayerVersion` and `apigateway:GET` to the `amplify-nutripilot` IAM user.
 
-**Reason:** Surfaced by the T046 post-push audit. Step 0.4's verification wants to prove the deployed Lambda layer actually contains real JavaScript rather than a broken symlink — the exact failure mode the tarball packaging was chosen to avoid. `aws lambda get-layer-version` is the direct way to check that, and the deploy user is currently denied it (`get-function-configuration` is permitted and does work). Until this is granted, layer verification falls back to a proxy: unzip the local `amplify/#current-cloud-backend/function/<name>/dist/latest-build.zip` and confirm its byte size equals the `CodeSize` reported by `get-function-configuration`. That is good evidence, not proof — it compares a size, not a hash, and it reads a local artifact rather than what AWS is actually serving.
+**Reason:** Surfaced by the T046 post-push audit and hit again during the Phase 4 push verification. Step 0.4's verification wants to prove two things about what AWS actually deployed: that the Lambda layer contains real JavaScript rather than a broken symlink (the exact failure mode the tarball packaging was chosen to avoid), and that the Cognito authorizer is genuinely attached to `/profile` rather than merely defined. `aws lambda get-layer-version` and `aws apigateway get-authorizers` are the direct ways to check those, and the deploy user is denied both (`lambda:get-function-configuration` is permitted and does work). Until this is granted, verification falls back to reading the local `amplify/#current-cloud-backend/...` artifact — good evidence, not proof, since it compares a byte size rather than a hash and reads a local file rather than what AWS is serving.
 
-**Verify:** under the `nutripilot` profile, `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev --version-number 1` returns JSON with a `Content.Location` download URL instead of `AccessDeniedException`.
+**Verify:** under the `nutripilot` profile, both `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev --version-number 2` and `aws apigateway get-authorizers --rest-api-id <id>` return JSON instead of `AccessDeniedException`.
 
-> Not a blocker for T046 or any later backend task — every one of them can ship on the local-artifact proxy. Do it before T027/T037–T040 so the layer-verification step stops being second-hand.
+> Not a blocker for T046 or any later backend task — every one of them can ship on the local-artifact proxy. Do it before T027/T037–T040 so post-push verification stops being second-hand.
+>
+> Note for API routes specifically: the **behavioural** check needs no permissions at all and is better evidence than any config read. `curl` the deployed route with no credentials and expect **401** (the Cognito authorizer rejecting), plus `curl -X OPTIONS` expecting **200** (CORS preflight deliberately left open). That pair is what actually proved `/profile` in T046 Phase 4; `apigateway:GET` would only have corroborated it.
 
 ### Step 0.5 — T047: error messages *(Claude Code session #3)*
 

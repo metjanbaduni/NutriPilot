@@ -120,12 +120,20 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   not just the first** — a clean `git status` proves nothing here, because the artifact is
   gitignored. (`modulePathIgnorePatterns` does not work for this; it is not consulted for
   node_modules resolution.)
-- The `amplify-nutripilot` IAM user lacks `lambda:ListLayers` and `lambda:GetLayerVersion`, so
-  post-push layer verification cannot read the deployed zip directly (`get-function-configuration`
-  IS permitted and does work). Current workaround: inspect
-  `amplify/#current-cloud-backend/function/<name>/dist/latest-build.zip` and confirm its byte
-  size equals the `CodeSize` AWS reports — a proxy, not a direct AWS read. Backlog task T051
-  grants the missing permissions.
+- The `amplify-nutripilot` IAM user lacks `lambda:ListLayers`, `lambda:GetLayerVersion` and
+  `apigateway:GET`, so post-push verification cannot read deployed layers or API authorizers
+  directly (`lambda:get-function-configuration` IS permitted and does work). Current workaround:
+  inspect the `amplify/#current-cloud-backend/...` artifact — for layers, confirm
+  `function/<name>/dist/latest-build.zip`'s byte size equals the `CodeSize` AWS reports; for the
+  API, read `api/<name>/build/*-cloudformation-template.json`. Both are proxies, not direct AWS
+  reads. Backlog task T051 grants the missing permissions.
+- Best proof that an API Gateway route is actually protected is behavioural, not config-shaped:
+  `curl` the deployed route with no credentials and expect **401** (a Cognito authorizer's own
+  rejection). 403 means IAM/SigV4 is in front of it instead — the wrong auth model here — and
+  200 means it is wide open. Also `curl -X OPTIONS` and expect **200**: CORS preflight carries no
+  Authorization header, so if the authorizer was attached to the `options` method too, browsers
+  fail before sending the real request. This check needs no IAM permissions at all and tests
+  runtime behaviour rather than deployed config, so prefer it over reading templates.
 
 ## Workflow rules (any agent)
 - For non-trivial work: propose a plan and WAIT for explicit approval before editing files

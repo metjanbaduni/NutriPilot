@@ -10,12 +10,12 @@ Verify that authenticated users can load and update their profile, recalculate m
   - If the app still shows a placeholder at `/settings`, temporarily render `ProfileForm` there for testing.
 
 ## Completion Checklist (US2)
-- [ ] All US2 tasks in `specs/000-planning-phase/tasks.md` are marked complete (T019–T026A).
-- [ ] `npm test` passes.
-- [ ] `npm run test:coverage` passes with ≥80% global coverage.
-- [ ] `npm run lint` passes.
-- [ ] `npm run format:check` passes.
-- [ ] Manual tests below executed and passed.
+Ticked 2026-07-27, on the T046 run recorded below.
+- [x] All US2 tasks in `specs/000-planning-phase/tasks.md` are marked complete (T019–T026A, T046).
+- [x] `npm run test:coverage` passes with ≥80% global coverage.
+- [x] `npm run lint` passes.
+- [x] `npm run format:check` passes.
+- [x] Manual tests below executed and passed.
 
 ---
 

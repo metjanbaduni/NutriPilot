@@ -8,14 +8,7 @@ const UNAUTHORIZED_MESSAGE = 'Unauthorized';
 const INVALID_BODY_MESSAGE = 'Invalid request body';
 const FAILED_UPDATE_MESSAGE = 'Failed to update profile';
 
-const REQUIRED_FIELDS = [
-  'bodyWeightKg',
-  'heightCm',
-  'ageYears',
-  'gender',
-  'activityLevel',
-  'goal',
-];
+const REQUIRED_FIELDS = ['bodyWeightKg', 'heightCm', 'ageYears', 'gender', 'activityLevel', 'goal'];
 
 function toJsonResponse(statusCode, body) {
   return {
@@ -60,7 +53,6 @@ function parseEventBody(event) {
     throw createHttpError(400, INVALID_BODY_MESSAGE);
   }
 }
-
 
 async function fetchExistingProfileItem(documentClient, tableName, userPk) {
   const command = new GetCommand({

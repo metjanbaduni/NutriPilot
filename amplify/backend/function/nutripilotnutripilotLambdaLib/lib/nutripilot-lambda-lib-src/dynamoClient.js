@@ -42,7 +42,7 @@ function getDynamoDocClient() {
     const client = new DynamoDBClient({ region: getAwsRegion() });
 
     global.__dynamoDocClient = DynamoDBDocumentClient.from(client, {
-      marshallOptions: { removeUndefinedValues: true }
+      marshallOptions: { removeUndefinedValues: true },
     });
   }
 

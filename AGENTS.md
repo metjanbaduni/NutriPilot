@@ -52,9 +52,9 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
 - Record new pitfalls here as: symptom → root cause → fix. Only pitfalls actually hit — never
   speculative. When a task fixes a recorded pitfall, remove or update its entry in that same
   task — a stale pitfall is worse than none.
-- Deployed API has ONE route: /api → nutripilotFunction (boilerplate echo). getProfile/updateProfile
-  are NOT registered and /profile is NOT a real route yet — T046 fixes this. A backend task is NOT
-  done until the real endpoint answers.
+  Never record which routes or resources are currently deployed — that changes on every push
+  and goes stale silently. Deployment status lives in tasks.md.
+- A backend task is NOT done until the real endpoint answers (Real Endpoint Rule).
 - `calculateMacros` is duplicated in `src/utils/` and
   `amplify/backend/function/nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/`
   (packaged as a Lambda layer, shared by all Lambda functions via the `nutripilot-lambda-lib`
@@ -134,6 +134,12 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   Authorization header, so if the authorizer was attached to the `options` method too, browsers
   fail before sending the real request. This check needs no IAM permissions at all and tests
   runtime behaviour rather than deployed config, so prefer it over reading templates.
+- CORS on `aws_proxy` routes: API Gateway returns the Lambda's response verbatim, so every
+  handler response must carry `Access-Control-Allow-Origin` itself — swagger method-response
+  headers and `override.ts` are inert. Symptom: network tab shows 200 and DynamoDB is written,
+  while the page shows a network error. `profileFunction`'s `withCorsHeaders` is the pattern.
+- `npm run verify` starts with `scripts/check-gate-coverage.mjs`, which fails if any git-tracked
+  source file escapes the lint or prettier globs — add new source dirs there, not just to the globs.
 
 ## Workflow rules (any agent)
 - For non-trivial work: propose a plan and WAIT for explicit approval before editing files

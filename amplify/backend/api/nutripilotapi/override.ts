@@ -1,7 +1,7 @@
 // This file is used to override the REST API resources configuration
 import {
   AmplifyApiRestResourceStackTemplate,
-  AmplifyProjectInfo
+  AmplifyProjectInfo,
 } from '@aws-amplify/cli-extensibility-helper';
 
 /**
@@ -48,9 +48,9 @@ export function override(
       'x-amazon-apigateway-authtype': 'cognito_user_pools',
       'x-amazon-apigateway-authorizer': {
         type: 'cognito_user_pools',
-        providerARNs: [DEV_COGNITO_USER_POOL_ARN]
-      }
-    }
+        providerARNs: [DEV_COGNITO_USER_POOL_ARN],
+      },
+    },
   };
 
   // Attach it to every /profile path variant (Amplify generates both `/profile`

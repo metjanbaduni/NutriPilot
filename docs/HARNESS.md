@@ -12,6 +12,7 @@ This page inventories what is actually installed in `.claude/` right now, and wh
 
 ### /groom — `.claude/skills/groom/SKILL.md`
 - **Purpose:** brings a story's task cards in `specs/000-planning-phase/tasks.md` up to the full Task Card format and in line with the current spec.md and DESIGN.md.
+- **Changed 2026-07-27 (T046 retro):** backend cards must now state Acceptance *behaviourally* — an anonymous request returning 401, `OPTIONS` returning 200 — rather than asserting a synthesized-template shape, and `aws_proxy` routes must require the handler to emit `Access-Control-Allow-Origin`. Both come from T046, where a card prescribed tracing an `AuthorizerId` through resources this API doesn't have, and where the missing CORS header was invisible to every gate except the live smoke test.
 - **When:** before starting any story, or whenever spec.md / DESIGN.md changed (run `/design-spec-sync` first if the change came from a screen).
 - **Command:** `/groom US4` (or any scope, e.g. `/groom the dashboard story`).
 - **Approval gates:** it only ever touches tasks.md, never code; it shows you the full diff plus a "Questions for the PO" list and **waits for your approval before applying**; the applied change ships via `/ship`.
@@ -34,7 +35,8 @@ This page inventories what is actually installed in `.claude/` right now, and wh
 
 ## Hooks and settings
 
-- **None installed.** Planned (workflow-v3 Part 3.2–3.3): `.claude/settings.json` with pre-approved safe commands and hard denies (force-push, `rm -rf`, reading `.env`), and a **lint-on-edit hook** — after every file Claude edits or writes, a script runs ESLint on that file and feeds errors straight back so they're fixed immediately.
+- **`scripts/check-gate-coverage.mjs` (installed 2026-07-27, T046 retro).** Not a Claude Code hook — the first step of `npm run verify`. It takes `git ls-files` as the source of truth and runs eslint + prettier over every tracked source file, so a file can no longer be silently excluded by a hand-maintained npm-script glob. That had happened three times: all `.jsx` (T048), `override.ts` (T046), and the Lambda sources, which were linted but never prettier-checked. Deliberate exclusions live in the script's `EXEMPT` list with a stated reason each.
+- **No Claude Code hooks installed.** Planned (workflow-v3 Part 3.2–3.3): `.claude/settings.json` with pre-approved safe commands and hard denies (force-push, `rm -rf`, reading `.env`), and a **lint-on-edit hook** — after every file Claude edits or writes, a script runs ESLint on that file and feeds errors straight back so they're fixed immediately.
 
 ## Typical task walkthrough (per-task ritual, workflow-v3 Part 4.2)
 

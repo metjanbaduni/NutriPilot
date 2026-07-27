@@ -12,7 +12,10 @@ Only tasks.md may be modified. Never touch code in a grooming session.
 2. Convert every task in scope to the full Task Card format. Each card must have:
    - Files: real paths (verify they exist or are clearly new)
    - UI cards: all four states (loading/error/empty/populated) in Acceptance
-   - Backend cards: Real Endpoint Rule in Acceptance + smoke evidence in DoD
+   - Backend cards: Real Endpoint Rule in Acceptance + smoke evidence in DoD. Acceptance
+     must be behavioural — an anonymous request returning 401 and `OPTIONS` returning 200 —
+     never "the synthesized template contains X". Any route on an `aws_proxy` integration
+     also carries "handler emits Access-Control-Allow-Origin on every response path".
    - Acceptance: only yes/no-verifiable statements
    - DoD: `npm run verify` (plus story-specific evidence)
 3. Cross-check cards against the CURRENT spec.md and DESIGN.md — if the docs changed

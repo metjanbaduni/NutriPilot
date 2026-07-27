@@ -478,7 +478,7 @@ no longer exist.
 
 - [ ] T049 Add "Nutritionist Analysis" section to the dashboard (AI guidance deferred from US3; requires API contract change, backend work, and UI — no field for it exists in the dashboard DTO today)
 
-- [ ] T051 Grant the `amplify-nutripilot` IAM user the read permissions post-push verification needs
+- [x] T051 Grant the `amplify-nutripilot` IAM user the read permissions post-push verification needs
   - Notes: Surfaced by the T046 post-push audit, then hit a second time during the T046 Phase 4
     push verification. Three read-only actions are missing, all denied with
     `AccessDeniedException` under the `nutripilot` profile:
@@ -502,6 +502,18 @@ no longer exist.
     `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev --version-number <n>`
     and `aws apigateway get-authorizers --rest-api-id <id>` succeed, and the documented
     verification in docs/agentic-workflow-v3.md step 0.4b runs end to end.
+  - Done 2026-07-27: granted via the AWS console as customer-managed policy
+    `NutriPilotDeployVerificationRead` attached directly to `amplify-nutripilot`; policy JSON checked
+    in at `docs/iam/amplify-nutripilot-verification-read.json`. All acceptance checks pass:
+    `get-layer-version` on `nutripilotnutripilotLambdaLib-dev:2` returns `CodeSha256
+    3v/33GOBpNwU5d8O29hTvQ2Dh8EqpWW4cvuhn9choZA=` (matching `CodeSize 3123977`), and
+    `get-authorizers --rest-api-id 2s2xf632ej` returns `CognitoUserPoolAuthorizer`
+    (`COGNITO_USER_POOLS` → pool `us-east-1_EgiqTyXNa`) attached to `ANY` on `/profile` and
+    `/profile/{proxy+}` with `OPTIONS` deliberately `NONE` — config now agrees with the behavioural
+    401/200 pair rather than merely being assumed to.
+    Two findings from the first use: `lambda:GetLayerVersionByArn` is not a distinct IAM action (it
+    authorizes against `lambda:GetLayerVersion`, so it is not in the granted policy despite the API
+    working), and the deployed layer proved genuinely out of sync with its source — logged as T054.
 
 - [ ] T053 Make the Cognito user pool ARN in `api/nutripilotapi/override.ts` environment-portable
   - Notes: **Only act on this when a second Amplify environment (e.g. `prod`) is actually added —
@@ -524,6 +536,39 @@ no longer exist.
     80%/75% gate is not actually being enforced on any backend code. Expect the global
     percentages to move once these files enter the denominator — check the thresholds still
     hold, and treat a drop as real signal rather than lowering the gate.
+
+- [ ] T054 Fix shared-lib source/tarball drift, then gate it automatically
+  - Files: `amplify/backend/function/nutripilotnutripilotLambdaLib/lib/nutripilot-lambda-lib-src/`
+    (re-pack target), `scripts/check-layer-tarball.mjs` (new), `package.json` (`verify` chain)
+  - Notes: Found by T051's first real use of `lambda:GetLayerVersion` — the deployed layer's
+    `dynamoClient.js` differs from the committed source by one character (a trailing comma after
+    `marshallOptions: { removeUndefinedValues: true }`), because commit `4ed6826` edited the source
+    without re-running `npm pack`. The layer installs from `nutripilot-lambda-lib-1.0.0.tgz`, not
+    from `nutripilot-lambda-lib-src/`, so **every** shared-lib source edit silently fails to deploy
+    unless the tarball is regenerated and committed. Today's drift is cosmetic (a trailing comma is
+    inert; `calculateMacros.js` is byte-identical), but the mechanism would hide a real bug fix just
+    as completely — the change looks committed, pushed and deployed while the Lambda keeps running
+    the old code. The byte-size proxy this repo relied on before T051 structurally could not catch
+    it: it compared a local artifact's size against `CodeSize`, and both were consistently stale.
+    A prose "remember to re-pack" reminder is explicitly NOT sufficient — a prose reminder is what
+    failed here. The gate must be machine-enforced, in the place this repo already trusts
+    (`npm run verify`, alongside `scripts/check-gate-coverage.mjs`).
+  - Acceptance (in order — do NOT ship only the gate and leave today's drift in place):
+    1. One-time fix: re-run `npm pack` in `nutripilot-lambda-lib-src/`, commit the regenerated
+       `.tgz`, and `amplify push` (the PO runs the push). Then confirm the DEPLOYED layer matches
+       source: `aws lambda get-layer-version --layer-name nutripilotnutripilotLambdaLib-dev
+       --version-number <new n> --profile nutripilot`, download `Content.Location`, extract, and
+       `diff` every file under `nodejs/node_modules/nutripilot-lambda-lib/` against
+       `nutripilot-lambda-lib-src/` — expect zero differences (today `dynamoClient.js` differs).
+    2. Durable prevention: add `scripts/check-layer-tarball.mjs`, chained into `npm run verify`,
+       which extracts the committed `.tgz` and diffs its `package/` contents against
+       `nutripilot-lambda-lib-src/`, exiting non-zero on any mismatch and naming both the drifted
+       file and the fix (`npm pack`).
+    3. Prove the gate bites: change one character in `dynamoClient.js` without re-packing, confirm
+       `npm run verify` FAILS; re-pack, confirm it passes. A gate never observed failing is not
+       known to work.
+  - Tests: N/A (build tooling) — acceptance step 3 is the test; record its output in the commit.
+  - DoD: `npm run verify` passes; steps 1–3 all executed, not merely described.
 
 ---
 

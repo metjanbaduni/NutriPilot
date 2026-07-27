@@ -100,6 +100,14 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   `.tgz` and depend on the tarball instead — installing from an archive always extracts a real
   copy, and it's a declared dependency so `npm install` won't prune it as extraneous. Full case
   in `docs/decisions/0001-lambda-routing-auth-shared-code.md`.
+  **The cost of that indirection: editing `nutripilot-lambda-lib-src/` does nothing until you
+  re-run `npm pack` and commit the new `.tgz`.** The layer installs from the tarball, not the
+  source dir, so an un-packed edit looks committed, pushed and deployed while the Lambda keeps
+  running the old code — silently, with a clean `git status`. This already happened once
+  (`4ed6826` edited `dynamoClient.js`; the deployed layer still has the pre-edit copy), and it
+  went unnoticed because the only check in place compared byte sizes. T054 adds a
+  `npm run verify` gate that diffs the committed `.tgz` against the source; until it lands,
+  re-pack by hand after every shared-lib edit.
 - `amplify function build` / `amplify build` only exercise packaging for resources that already
   exist in AWS. For a brand-new, not-yet-pushed resource (e.g. a first-time Lambda layer) they
   succeed trivially without testing anything — there's no local way to verify layer packaging
@@ -122,13 +130,17 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   not just the first** — a clean `git status` proves nothing here, because the artifact is
   gitignored. (`modulePathIgnorePatterns` does not work for this; it is not consulted for
   node_modules resolution.)
-- The `amplify-nutripilot` IAM user lacks `lambda:ListLayers`, `lambda:GetLayerVersion` and
-  `apigateway:GET`, so post-push verification cannot read deployed layers or API authorizers
-  directly (`lambda:get-function-configuration` IS permitted and does work). Current workaround:
-  inspect the `amplify/#current-cloud-backend/...` artifact — for layers, confirm
-  `function/<name>/dist/latest-build.zip`'s byte size equals the `CodeSize` AWS reports; for the
-  API, read `api/<name>/build/*-cloudformation-template.json`. Both are proxies, not direct AWS
-  reads. Backlog task T051 grants the missing permissions.
+- The `amplify-nutripilot` IAM user CAN now read deployed layers and API config directly
+  (`lambda:ListLayers`, `lambda:GetLayerVersion`, `apigateway:GET`, granted by T051 as the
+  customer-managed policy `NutriPilotDeployVerificationRead`; JSON checked in at
+  `docs/iam/amplify-nutripilot-verification-read.json`). Verify a deployed layer by downloading it —
+  `aws lambda get-layer-version ... --query Content.Location`, then extract and diff against source —
+  never by comparing byte sizes; the old size-vs-`CodeSize` proxy was stale on both sides at once and
+  hid real drift for weeks (that drift is T054). Deploy-user permissions are outside Amplify's model
+  entirely: `custom-policies.json` and `amplify update function` write the Lambda *execution* role,
+  never the caller's, so this kind of grant is always an IAM-side change. `lambda:GetLayerVersionByArn`
+  is not a distinct IAM action — the API of that name authorizes against `lambda:GetLayerVersion`,
+  and the console's policy validator rejects it as nonexistent.
 - Best proof that an API Gateway route is actually protected is behavioural, not config-shaped:
   `curl` the deployed route with no credentials and expect **401** (a Cognito authorizer's own
   rejection). 403 means IAM/SigV4 is in front of it instead — the wrong auth model here — and

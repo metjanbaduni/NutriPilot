@@ -137,7 +137,7 @@ git push -u origin 021-cleanup-task-zero
 
 ### Step 0.4 — T046: wire the backend *(Claude Code session #2 — the critical one)*
 
-Some vocabulary first: **API Gateway** is the AWS service that gives your Lambdas public URLs; a **route** is one URL path it exposes (like `/profile`); a **Cognito authorizer** is the API Gateway setting that rejects any request that doesn't carry a valid login token from your Cognito user pool — it's what makes a route "signed-in users only"; a **smoke test** is the simplest possible real-world check ("does the deployed endpoint answer at all with the right shape").
+**Status: ✅ done 2026-07-27.** Some vocabulary first: **API Gateway** is the AWS service that gives your Lambdas public URLs; a **route** is one URL path it exposes (like `/profile`); a **Cognito authorizer** is the API Gateway setting that rejects any request that doesn't carry a valid login token from your Cognito user pool — it's what makes a route "signed-in users only"; a **smoke test** is the simplest possible real-world check ("does the deployed endpoint answer at all with the right shape").
 
 **Instruction:** Fresh session (`/clear` or restart). Plan Mode. Paste:
 
@@ -158,6 +158,14 @@ Then: `npm run verify && npm run build`, commit (`feat: register profile Lambdas
 **Verify:** the three-step smoke test above, plus: `python3 -c "import json; d=json.load(open('amplify/backend/backend-config.json')); print(list(d['function'].keys()))"` lists `getProfile` and `updateProfile`. The settings screen works with the browser's network tab showing real 200 responses from `amazonaws.com`.
 
 ### Step 0.4b — Grant the deploy user post-push read permissions *(by hand — T051, non-blocking)*
+
+> **DONE ✅  2026-07-27.** Granted as customer-managed policy `NutriPilotDeployVerificationRead`,
+> attached directly to `amplify-nutripilot`; the policy JSON is checked in at
+> `docs/iam/amplify-nutripilot-verification-read.json`. Two things worth keeping: `lambda:GetLayerVersionByArn`
+> is **not** a distinct IAM action (the console validator rejects it — the `GetLayerVersionByArn` API
+> authorizes against `lambda:GetLayerVersion`), and the very first use of the new permissions found real
+> drift between the deployed layer and its source, now logged as **T054**. The permissions paid for
+> themselves immediately.
 
 **Instruction:** In the AWS console (or via a profile with IAM rights), attach `lambda:ListLayers`, `lambda:GetLayerVersion` and `apigateway:GET` to the `amplify-nutripilot` IAM user.
 
@@ -997,7 +1005,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 
 - [x] 0.3 T048: lint rules + delete `.eslintrc.js` + CI — Claude session, manual gate
 - [x] 0.4 T046: backend wiring + live smoke test — done 2026-07-27, `/profile` live behind a Cognito authorizer, GET+POST verified in the browser
-- [ ] 0.4b T051: grant `amplify-nutripilot` `lambda:ListLayers`, `lambda:GetLayerVersion` + `apigateway:GET` — by hand, non-blocking
+- [x] 0.4b T051: grant `amplify-nutripilot` `lambda:ListLayers`, `lambda:GetLayerVersion` + `apigateway:GET` — done 2026-07-27 via console customer-managed policy `NutriPilotDeployVerificationRead` (JSON checked in at `docs/iam/amplify-nutripilot-verification-read.json`); first use immediately found real layer drift, logged as T054
 - [ ] 0.5 T047: error messages — Claude session; open the cleanup PR; merge when CI is green
 
 **DESIGN TRACK (sequential; parallel with the code track):**
@@ -1021,6 +1029,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 - [ ] 3.8 Create `.claude/skills/kickoff/SKILL.md` — 10 min (same sitting as 3.1–3.6)
 - [ ] Dry run: one trivial change through the full ritual (branch → plan → implement → /verify-ui → /ship → CI → merge) — 30 min
 - [ ] `/verify-ui` audit of the three shipped screens (login, register, settings) against the new design system — findings become task cards
+- [ ] Doc fix — T051 ID collision: lines 263/278/296/314 assign T051 to the US3 seeding script, but T051 is the IAM grant (line 1000, tasks.md); next free ID is **T055** (T049–T054 taken; T054 is the layer-tarball drift gate). Fix before running the US3 Kickoff.
 - [ ] 2.3–2.4 US3 Story Kickoff via `/kickoff`, reduced scope per the 2.3 annotation: Demo Gate card + seeding task (T051) + requirement-ID coverage check, approved and committed
 - [ ] `/kickoff` per remaining new story (US4, then the US5+ stories from the full-UI scope decision) — each before its first task
 - [ ] First real task: first card of the approved US3 block per the Part 6 order (T027 backend, or T028 if starting the frontend chain)

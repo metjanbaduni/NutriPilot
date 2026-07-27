@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  img, svg { max-width: 100%; }
+</style>
+<title>NutriPilot on AWS — what T046 actually built</title>
+
+<style>
+  :root {
+    --ground: #f5f8f7;
+    --panel: #ffffff;
+    --panel-2: #eef3f2;
+    --line: #d3dedb;
+    --line-strong: #b3c4c0;
+    --text: #14201e;
+    --text-dim: #47605b;
+    --text-faint: #6f8781;
+    --accent: #0a7d72;
+    --accent-soft: #d6ece9;
+    --warn: #a55c0d;
+    --warn-soft: #f8ecd9;
+    --pass: #2f7a4c;
+    --pass-soft: #dcefe2;
+    --code-bg: #eaf0ef;
+
+    --serif: Georgia, "Iowan Old Style", "Source Serif Pro", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d1413;
+      --panel: #141d1c;
+      --panel-2: #192423;
+      --line: #263634;
+      --line-strong: #3a504d;
+      --text: #dde7e5;
+      --text-dim: #9db1ad;
+      --text-faint: #7b918d;
+      --accent: #2bb8a6;
+      --accent-soft: #10302d;
+      --warn: #d99441;
+      --warn-soft: #322516;
+      --pass: #5cb87f;
+      --pass-soft: #16301f;
+      --code-bg: #101917;
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ground: #f5f8f7;
+    --panel: #ffffff;
+    --panel-2: #eef3f2;
+    --line: #d3dedb;
+    --line-strong: #b3c4c0;
+    --text: #14201e;
+    --text-dim: #47605b;
+    --text-faint: #6f8781;
+    --accent: #0a7d72;
+    --accent-soft: #d6ece9;
+    --warn: #a55c0d;
+    --warn-soft: #f8ecd9;
+    --pass: #2f7a4c;
+    --pass-soft: #dcefe2;
+    --code-bg: #eaf0ef;
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0d1413;
+    --panel: #141d1c;
+    --panel-2: #192423;
+    --line: #263634;
+    --line-strong: #3a504d;
+    --text: #dde7e5;
+    --text-dim: #9db1ad;
+    --text-faint: #7b918d;
+    --accent: #2bb8a6;
+    --accent-soft: #10302d;
+    --warn: #d99441;
+    --warn-soft: #322516;
+    --pass: #5cb87f;
+    --pass-soft: #16301f;
+    --code-bg: #101917;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2.5rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead { display: flex; flex-direction: column; gap: 1rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(2rem, 5.5vw, 3.1rem);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .standfirst {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    max-width: var(--measure);
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  .fact { background: var(--panel); padding: 0.85rem 1rem; }
+  .fact dt {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.3rem;
+  }
+  .fact dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { display: flex; flex-direction: column; gap: 1.15rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: 1.02rem;
+    letter-spacing: -0.005em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  p { margin: 0; max-width: var(--measure); }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.08em 0.34em;
+    word-break: break-word;
+  }
+
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre;
+    word-break: normal;
+  }
+
+  ul, ol { margin: 0; padding-left: 1.25rem; max-width: var(--measure); }
+  li { margin-bottom: 0.4rem; }
+  li:last-child { margin-bottom: 0; }
+
+  strong { font-weight: 650; }
+
+  /* ---------- callouts ---------- */
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 0.85rem 1.1rem;
+    border-radius: 0 3px 3px 0;
+    max-width: var(--measure);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .note.pass { border-left-color: var(--pass); background: var(--pass-soft); }
+  .note.why { border-left-color: var(--line-strong); background: var(--panel-2); }
+
+  .note-label {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .note.warn .note-label { color: var(--warn); }
+  .note.pass .note-label { color: var(--pass); }
+  .note.why .note-label { color: var(--text-dim); }
+  .note p, .note ul { max-width: none; }
+
+  /* ---------- request trace ---------- */
+
+  .trace { display: flex; flex-direction: column; gap: 0; }
+
+  .hop {
+    display: grid;
+    grid-template-columns: 3.1rem 1fr;
+    gap: 0 1rem;
+    position: relative;
+    padding-bottom: 1.4rem;
+  }
+  .hop:last-child { padding-bottom: 0; }
+
+  .hop::before {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    top: 1.9rem;
+    bottom: -0.2rem;
+    width: 1px;
+    background: var(--line-strong);
+  }
+  .hop:last-child::before { display: none; }
+
+  .hop-dot {
+    width: 3.1rem;
+    height: 1.65rem;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hop-body { display: flex; flex-direction: column; gap: 0.35rem; padding-top: 0.05rem; }
+  .hop-title { font-weight: 650; font-size: 0.97rem; }
+  .hop-title span {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin-left: 0.5rem;
+  }
+  .hop-body p { font-size: 0.94rem; color: var(--text-dim); }
+
+  /* ---------- resource cards ---------- */
+
+  .cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .card-service {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .card h3 { font-size: 0.97rem; }
+  .card p { font-size: 0.9rem; color: var(--text-dim); max-width: none; }
+  .card .id {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    word-break: break-all;
+  }
+
+  /* ---------- console steps ---------- */
+
+  .steps { display: flex; flex-direction: column; gap: 1.6rem; counter-reset: step; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0 1.05rem;
+    align-items: start;
+  }
+  .step-num {
+    counter-increment: step;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    border-top: 2px solid var(--accent);
+    padding-top: 0.45rem;
+  }
+  .step-num::before { content: counter(step, decimal-leading-zero); }
+
+  .step-body { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  .path {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.5rem 0.7rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .path b { color: var(--accent); font-weight: 600; }
+
+  .look { display: flex; flex-direction: column; gap: 0.4rem; }
+  .look-label {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  /* ---------- tables ---------- */
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; min-width: 480px; }
+  th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    background: var(--panel-2);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td code { font-size: 0.8rem; }
+
+  /* ---------- misc ---------- */
+
+  details {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    background: var(--panel);
+    max-width: var(--measure);
+  }
+  summary { cursor: pointer; font-weight: 600; font-size: 0.94rem; }
+  details[open] summary { margin-bottom: 0.7rem; }
+  details > *:not(summary) { font-size: 0.94rem; color: var(--text-dim); }
+
+  .mermaid { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 1rem; overflow-x: auto; }
+
+  footer {
+    border-top: 1px solid var(--line-strong);
+    padding-top: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--text-faint);
+    max-width: var(--measure);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">NutriPilot · task T046 · region us-east-1</div>
+    <h1>What you actually built last night, and how to go look at it</h1>
+    <p class="standfirst">
+      T046 turned a pile of local code into seven live AWS resources that cooperate to answer one
+      HTTP request. This walks the request end to end, then takes you through the console screen by
+      screen so each resource stops being a name in a template and becomes a thing you have seen.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>Account</dt><dd>880079111164</dd></div>
+      <div class="fact"><dt>Region</dt><dd>us-east-1 (N. Virginia)</dd></div>
+      <div class="fact"><dt>Environment</dt><dd>dev</dd></div>
+      <div class="fact"><dt>Root CFN stack</dt><dd>amplify-nutripilot-dev-66f67</dd></div>
+    </dl>
+  </header>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>The one-sentence version</h2>
+    <p>
+      A browser sends <code>GET /profile</code> with a JWT; API Gateway checks that JWT against a
+      Cognito User Pool and, if it is valid, hands the request to a Lambda function along with the
+      user's identity; the Lambda reads two rows out of a DynamoDB table and returns JSON.
+    </p>
+    <p>
+      Everything else — the layer, the IAM roles, the CloudFormation stacks, the S3 deployment
+      bucket — exists to make that sentence true. Nothing in this system is a server you can log
+      into. There is no EC2 instance, no container, nothing running while you sleep. You are billed
+      per request and per millisecond of Lambda execution, and at your traffic level that rounds to
+      zero.
+    </p>
+
+    <pre class="mermaid">
+flowchart LR
+  B["Browser<br/>React app"] -->|"1. Authorization: idToken"| G["API Gateway<br/>2s2xf632ej"]
+  G -->|"2. validate JWT"| C["Cognito User Pool<br/>us-east-1_EgiqTyXNa"]
+  C -->|"3. claims"| G
+  G -->|"4. aws_proxy event"| L["Lambda<br/>profileFunction-dev"]
+  L -.->|"reads shared code"| Y["Layer<br/>nutripilotnutripilotLambdaLib v2"]
+  L -->|"5. Query PK=USER#sub"| D[("DynamoDB<br/>NutriPilotTable-dev")]
+  D -->|"6. items"| L
+  L -->|"7. JSON + CORS header"| G
+  G -->|"8. response"| B
+  L -->|"logs"| W["CloudWatch Logs"]
+    </pre>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>The request, hop by hop</h2>
+    <p>
+      This is the part worth internalising. Each hop below is a place where the request can fail,
+      and each failure looks different — which is why last night's CORS bug was confusing.
+    </p>
+
+    <div class="trace">
+
+      <div class="hop">
+        <div class="hop-dot">01</div>
+        <div class="hop-body">
+          <div class="hop-title">The browser gets a token <span>src/api/client.js</span></div>
+          <p>
+            When you signed in, Cognito handed the app three JWTs: an <strong>ID token</strong> (who
+            you are), an <strong>access token</strong> (what you may do), and a refresh token. Our
+            client calls <code>fetchAuthSession()</code> and attaches the <em>ID token</em> as the
+            raw <code>Authorization</code> header — no <code>Bearer</code> prefix. A Cognito User
+            Pool authorizer accepts it either way.
+          </p>
+        </div>
+      </div>
+
+      <div class="hop">
+        <div class="hop-dot">02</div>
+        <div class="hop-body">
+          <div class="hop-title">API Gateway receives it <span>execute-api endpoint</span></div>
+          <p>
+            The request lands on a regional REST API. API Gateway matches the path
+            <code>/profile</code> and the method against its route table. Our route is registered as
+            <strong>ANY</strong>, meaning one route catches GET, POST, PUT, DELETE — all of them.
+          </p>
+        </div>
+      </div>
+
+      <div class="hop">
+        <div class="hop-dot">03</div>
+        <div class="hop-body">
+          <div class="hop-title">The authorizer runs <span>COGNITO_USER_POOLS</span></div>
+          <p>
+            Before your code sees anything, API Gateway verifies the JWT's signature against the
+            User Pool's public keys, checks it hasn't expired, and checks it was issued for this
+            pool. Fail any of those and the caller gets a flat <strong>401</strong> and your Lambda
+            is never invoked — you are not billed, and nothing appears in your logs. That is the
+            single most valuable property of this design: unauthenticated traffic never reaches
+            your code.
+          </p>
+        </div>
+      </div>
+
+      <div class="hop">
+        <div class="hop-dot">04</div>
+        <div class="hop-body">
+          <div class="hop-title">Lambda is invoked <span>aws_proxy integration</span></div>
+          <p>
+            API Gateway packages the whole HTTP request into a JSON <em>event</em> object and calls
+            the function. Critically, it also injects the validated token claims at
+            <code>event.requestContext.authorizer.claims</code>. Your handler reads
+            <code>claims.sub</code> — the user's permanent unique ID — and never validates a token
+            itself. It <em>trusts</em> the gateway. That trust is only safe because the gateway is
+            the only thing allowed to invoke the function.
+          </p>
+        </div>
+      </div>
+
+      <div class="hop">
+        <div class="hop-dot">05</div>
+        <div class="hop-body">
+          <div class="hop-title">The function reads DynamoDB <span>via its execution role</span></div>
+          <p>
+            The Lambda assumes an IAM role that permits DynamoDB reads and writes on exactly one
+            table. It queries <code>PK = "USER#&lt;sub&gt;"</code> for the <code>PROFILE</code> and
+            <code>TARGETS</code> rows. Note there are no AWS credentials anywhere in the code — the
+            role supplies them at runtime through environment variables the SDK picks up
+            automatically.
+          </p>
+        </div>
+      </div>
+
+      <div class="hop">
+        <div class="hop-dot">06</div>
+        <div class="hop-body">
+          <div class="hop-title">The response travels back verbatim <span>where CORS bit us</span></div>
+          <p>
+            With an <code>aws_proxy</code> integration, API Gateway does <em>not</em> reshape the
+            response. Whatever object your function returns — status code, headers, body — is what
+            the caller receives. That is why the missing
+            <code>Access-Control-Allow-Origin</code> header had to be fixed in the Lambda, not in
+            the gateway config. API Gateway was faithfully passing along a response that had no
+            such header, and the browser threw it away.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note warn">
+      <div class="note-label">The failure mode worth memorising</div>
+      <p>
+        CORS is enforced <strong>by the browser, after the response arrives</strong>. The server
+        already ran, already wrote to the database, already returned 200. That is exactly what you
+        saw: the network tab showed success, the page showed an error, and the profile had in fact
+        been saved. A CORS error never means "the request didn't happen" — it means "the request
+        happened and the browser refused to let JavaScript read the result."
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>The seven resources</h2>
+    <p>
+      Here is the whole inventory, with the real identifiers so you can find each one. Cards are
+      grouped by what they do, not by any order of importance.
+    </p>
+
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-service">Amazon Cognito · User Pool</div>
+        <h3>The identity provider</h3>
+        <div class="id">us-east-1_EgiqTyXNa</div>
+        <p>
+          A managed user directory. It stores accounts, hashes passwords, runs the email
+          verification flow, and issues JWTs. App client
+          <code>3r8gqa8a55copdb3tttr6am0c9</code> is the registered caller — sign-in is by email.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-service">Amazon Cognito · Identity Pool</div>
+        <h3>Present but unused</h3>
+        <div class="id">us-east-1:deefaf95-68c4-4882-b22e-e31839c7d963</div>
+        <p>
+          Amplify created this automatically. An Identity Pool exchanges a login for
+          <em>temporary AWS credentials</em> — a different mechanism entirely. Our API does not use
+          it. The <code>authRole</code> / <code>unauthRole</code> IAM roles in the account belong to
+          it and are currently doing nothing.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-service">Amazon API Gateway · REST API</div>
+        <h3>The front door</h3>
+        <div class="id">2s2xf632ej · stage: dev</div>
+        <p>
+          Routes <code>/profile</code> and <code>/profile/{proxy+}</code>, each with an
+          <strong>ANY</strong> method (proxying to Lambda) and an <strong>OPTIONS</strong> method
+          (a mock integration answering CORS preflight, deliberately unauthenticated).
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-service">AWS Lambda · Function</div>
+        <h3>The compute</h3>
+        <div class="id">profileFunction-dev</div>
+        <p>
+          Node.js 22, handler <code>index.handler</code>, 25-second timeout, default 128 MB memory.
+          <code>index.js</code> is a dispatcher: it branches on <code>httpMethod</code> to
+          <code>getProfile</code> or <code>updateProfile</code>, because ANY gives you one function
+          for every verb.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-service">AWS Lambda · Layer</div>
+        <h3>The shared library</h3>
+        <div class="id">nutripilotnutripilotLambdaLib · version 2</div>
+        <p>
+          A zip of shared code mounted at <code>/opt/nodejs</code> inside the function's filesystem.
+          Holds <code>calculateMacros</code> and the DynamoDB client factory so future Lambdas
+          reuse them instead of copying. Version 2 is the one currently attached.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-service">Amazon DynamoDB · Table</div>
+        <h3>The data store</h3>
+        <div class="id">NutriPilotTable-dev</div>
+        <p>
+          Single-table design: partition key <code>PK</code>, sort key <code>SK</code>. Your profile
+          and your targets are two rows sharing one partition —
+          <code>USER#&lt;sub&gt;</code> — distinguished by <code>SK</code> values
+          <code>PROFILE</code> and <code>TARGETS</code>.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-service">AWS IAM · Role &amp; policies</div>
+        <h3>The permissions</h3>
+        <div class="id">profileFunction execution role</div>
+        <p>
+          Two grants: write to its own CloudWatch log group, and read/write that one DynamoDB table.
+          Nothing else. Separately, a <em>resource policy</em> on the function allows API Gateway to
+          invoke it.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <div class="note-label">Two directions of permission — the concept most people miss</div>
+      <p>
+        IAM answers two different questions and they are easy to confuse.
+        The <strong>execution role</strong> answers <em>"what may this function reach out and
+        touch?"</em> — DynamoDB, logs. The <strong>resource policy</strong>
+        (<code>AWS::Lambda::Permission</code> in the template) answers <em>"who is allowed to invoke
+        this function?"</em> — only this specific API Gateway.
+      </p>
+      <p>
+        Both must exist. Without the role, your code gets AccessDenied from DynamoDB. Without the
+        resource policy, API Gateway gets a 500 trying to call you. You will see both in the console
+        below, on two different tabs of the same page.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>The console tour</h2>
+    <p>
+      Nine stops, in an order that builds understanding rather than following the service menu.
+      Sign in to the console first. Everything here is read-only looking — nothing asks you to
+      change anything.
+    </p>
+
+    <div class="note warn">
+      <div class="note-label">Do this before anything else</div>
+      <p>
+        Set the region picker in the top-right of the console to <strong>N. Virginia
+        (us-east-1)</strong>. Almost every AWS console page is region-scoped. If you are in the
+        wrong region, every list will be empty and it looks exactly like nothing was ever deployed.
+        This is the single most common source of "where did my stuff go?"
+      </p>
+    </div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>CloudFormation — start here, because it explains everything else</h3>
+          <div class="path">Console → <b>CloudFormation</b> → Stacks</div>
+          <p>
+            You never created any of these resources by hand. Amplify wrote CloudFormation
+            templates — infrastructure as code — and CloudFormation created them. Find
+            <code>amplify-nutripilot-dev-66f67</code>. Tick <strong>"View nested"</strong> to see the
+            child stacks: one each for auth, api, storage, and the two functions.
+          </p>
+          <div class="look">
+            <div class="look-label">Open these tabs</div>
+            <ul>
+              <li><strong>Resources</strong> — every physical thing this stack owns, with a clickable link to each. This is the master index of your entire backend.</li>
+              <li><strong>Events</strong> — the chronological log of last night's deploy. Scroll to the bottom and read upward to watch the push happen in real time.</li>
+              <li><strong>Template</strong> — the JSON that produced it all.</li>
+            </ul>
+          </div>
+          <div class="note">
+            <div class="note-label">Why it matters</div>
+            <p>
+              This is the difference between a hobby account and a real one. Because the definition
+              lives in code, the whole backend can be destroyed and recreated identically, or stood
+              up a second time as a <code>prod</code> environment. Deleting the stack deletes the
+              resources — which is also how you avoid surprise bills on abandoned projects.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>Cognito — where your login lives</h3>
+          <div class="path">Console → <b>Cognito</b> → User pools → <b>us-east-1_EgiqTyXNa</b></div>
+          <p>
+            Find your own test account under <strong>Users</strong> and click it. The important
+            field is <strong>sub</strong> — a UUID that is your permanent identity. Copy it. That
+            exact value is the second half of your DynamoDB partition key, and you will recognise it
+            again at stop 7.
+          </p>
+          <div class="look">
+            <div class="look-label">Also worth opening</div>
+            <ul>
+              <li><strong>App integration → App clients</strong> — <code>3r8gqa8a55copdb3tttr6am0c9</code>, the registration that lets the React app talk to this pool.</li>
+              <li><strong>Sign-in experience</strong> — email as username, and the password policy (8 characters minimum) that your registration form has to satisfy.</li>
+            </ul>
+          </div>
+          <div class="note">
+            <div class="note-label">Mental model</div>
+            <p>
+              A User Pool is <em>authentication</em> — proving who you are, and getting a JWT that
+              says so. An Identity Pool is <em>authorization to call AWS itself</em> — swapping that
+              proof for temporary AWS credentials. We use the first and not the second. Keeping
+              these two straight is the thing that makes Cognito stop being confusing.
+            </p>
+          </div>
+          <div class="note why">
+            <div class="note-label">Why this is its own service</div>
+            <p>
+              IAM and Cognito look like the same problem solved twice, and the split is deliberate.
+              IAM principals are <em>your</em> principals — staff, roles, services — created by an
+              administrator, global to the account, and every one of them a potential path to your
+              data and your bill. AWS caps them in the low thousands per account precisely because
+              IAM was never meant to hold your customers. Application users are the opposite on
+              every axis: there may be millions, they self-register at 3am with nobody approving
+              them, and they must never be able to call an AWS API at all. Folding the two into one
+              system would mean every signup mutates your account's security posture.
+            </p>
+            <p>
+              The two also answer different questions. IAM asks <em>"may this principal call this
+              AWS API?"</em> — a question about AWS. Cognito asks <em>"is this person who they claim
+              to be?"</em> — a question about your application's domain. That is why there is no
+              path from a Cognito JWT to an AWS API call unless you deliberately build one. Building
+              one is exactly what an Identity Pool does, and the fact that it is a separate, opt-in
+              component rather than the default is the whole point.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>API Gateway — the routes you spent last night creating</h3>
+          <div class="path">Console → <b>API Gateway</b> → <b>nutripilotapi</b> → Resources</div>
+          <p>
+            You should see a tree containing <code>/profile</code> and, beneath it,
+            <code>/{proxy+}</code>. Each has an <strong>ANY</strong> method and an
+            <strong>OPTIONS</strong> method. Notably, you should <em>not</em> see <code>/api</code> —
+            that was the boilerplate route you removed.
+          </p>
+          <p>
+            Click <strong>ANY</strong> under <code>/profile</code>. The method execution diagram
+            shows the request flowing left to right. Look at the left box: it should name a
+            <strong>Cognito user pool authorizer</strong>. Look at the right: integration type
+            <strong>Lambda proxy</strong>, pointing at <code>profileFunction-dev</code>.
+          </p>
+          <div class="look">
+            <div class="look-label">Then check</div>
+            <ul>
+              <li><strong>Authorizers</strong> (left nav) — <code>CognitoUserPoolAuthorizer</code>, type Cognito, wired to your user pool ARN. This is the object your <code>override.ts</code> created.</li>
+              <li><strong>Stages → dev</strong> — the invoke URL: <code>https://2s2xf632ej.execute-api.us-east-1.amazonaws.com/dev</code>. A stage is a deployed snapshot; editing routes does nothing to live traffic until you deploy to a stage.</li>
+              <li><strong>Gateway responses</strong> — <code>DEFAULT_4XX</code> and <code>DEFAULT_5XX</code> carry CORS headers so that even a 401 from the authorizer is readable by the browser.</li>
+            </ul>
+          </div>
+          <div class="note warn">
+            <div class="note-label">Two gotchas here</div>
+            <p>
+              <strong>The OPTIONS method has no authorizer, on purpose.</strong> A browser's CORS
+              preflight never carries an <code>Authorization</code> header. Protect OPTIONS and every
+              browser request fails before the real one is even sent.
+            </p>
+            <p>
+              <strong>The console's built-in "Test" button bypasses the authorizer entirely.</strong>
+              It invokes the integration directly. A passing console test tells you nothing about
+              whether your auth works — which is why we verified with <code>curl</code> against the
+              real URL instead.
+            </p>
+          </div>
+          <div class="note why">
+            <div class="note-label">Why this is its own service</div>
+            <p>
+              Lambda's native interface is an invoke API, not HTTP. AWS kept them apart so that
+              Lambda has exactly one job — run code in response to an event — and HTTP is only one
+              of two hundred-odd event sources it accepts alongside S3 uploads, DynamoDB streams,
+              queues and cron. Baking a web server into Lambda would privilege one trigger over all
+              the others. Meanwhile everything a public front door needs — TLS, custom domains,
+              throttling, API keys, caching, WAF, request validation, authorizers, staged deploys —
+              is a large stateful surface with nothing to do with running your code. Keeping it
+              separate means the same front door can sit in front of a Lambda, a container behind a
+              VPC link, or a direct DynamoDB integration with no compute at all. It is also what
+              makes the 401 possible: an enforcement point outside the house can turn people away
+              before they reach the door. (Lambda <em>Function URLs</em> now exist for people who
+              just want a URL — deliberately stripped of nearly all of this, which is the exception
+              proving the rule.)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>Lambda — your code, running in AWS</h3>
+          <div class="path">Console → <b>Lambda</b> → Functions → <b>profileFunction-dev</b></div>
+          <p>
+            The <strong>Code</strong> tab shows the actual deployed source in an editor. Open
+            <code>index.js</code> and find <code>CORS_HEADERS</code> — that is last night's fix,
+            living in AWS. Seeing your own code here is usually the moment the whole thing becomes
+            concrete.
+          </p>
+          <p>
+            At the top, the <strong>Diagram</strong> view draws API Gateway as a trigger on the left
+            and the layer beneath — a visual of the same wiring you read in the template.
+          </p>
+          <div class="look">
+            <div class="look-label">Configuration tab, four things</div>
+            <ul>
+              <li><strong>Environment variables</strong> — <code>STORAGE_NUTRIPILOTTABLE_NAME</code> is how the code learns the table name without hardcoding it. This is why the same code works in a future <code>prod</code> environment.</li>
+              <li><strong>Permissions</strong> — the execution role, with the DynamoDB and logs policies. Scroll down to <strong>Resource-based policy statements</strong> for the other direction: API Gateway's permission to invoke.</li>
+              <li><strong>Triggers</strong> — API Gateway, confirming the wiring from the Lambda's side.</li>
+              <li><strong>General configuration</strong> — 25-second timeout, 128 MB memory. Both are knobs; memory also scales CPU proportionally.</li>
+            </ul>
+          </div>
+          <div class="note why">
+            <div class="note-label">Why this is its own service</div>
+            <p>
+              What AWS is actually selling here is a unit of work with an execution role and a
+              lifecycle, decoupled from whatever triggered it — which is why the same function can
+              serve HTTP today and a queue tomorrow without being rewritten. The deeper reason for
+              the separation is that each layer of this system scales along a different axis: API
+              Gateway scales as a request router, Lambda as concurrent execution environments,
+              DynamoDB as partitions. Fusing any two of them would force one scaling model and one
+              cost curve onto both. That separation is also why Lambda <em>enforces</em>
+              statelessness rather than merely encouraging it — nothing guarantees two requests hit
+              the same environment, and that constraint is precisely what lets AWS scale you from
+              zero to thousands of concurrent runs without asking. It is worth remembering that the
+              DynamoDB client cached on <code>global</code> is an optimisation for the case where an
+              environment happens to be reused, never state you may depend on.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>Lambda Layers — the shared code, versioned</h3>
+          <div class="path">Console → <b>Lambda</b> → Layers → <b>nutripilotnutripilotLambdaLib</b></div>
+          <p>
+            You should see <strong>version 2</strong>. Layers are immutable: publishing never edits
+            a version, it creates the next one, and functions point at a specific version number.
+            That is why attaching an updated layer is a deliberate act, and why "the layer is
+            updated but the function still runs the old code" is a classic bug — the function was
+            still pinned to version 1.
+          </p>
+          <p>
+            At runtime the layer's contents are unzipped into <code>/opt</code>, so
+            <code>/opt/nodejs/node_modules</code> lands on Node's module search path and
+            <code>require('nutripilot-lambda-lib/dynamoClient')</code> just resolves.
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>DynamoDB — see your own profile row</h3>
+          <div class="path">Console → <b>DynamoDB</b> → Tables → <b>NutriPilotTable-dev</b> → Explore table items</div>
+          <p>
+            Click <strong>Run</strong> to scan. You should find two rows with
+            <code>PK = USER#&lt;the sub you copied at stop 2&gt;</code> — one with
+            <code>SK = PROFILE</code> holding your weight, height, age and goal, and one with
+            <code>SK = TARGETS</code> holding the calculated macros. This is the data your smoke test
+            wrote.
+          </p>
+          <div class="note">
+            <div class="note-label">Single-table design, in one paragraph</div>
+            <p>
+              Coming from SQL you would expect a <code>profiles</code> table and a
+              <code>targets</code> table. DynamoDB deliberately does the opposite: put everything in
+              one table, and use a compound key so related items share a partition. Because both
+              rows live under the same <code>PK</code>, one <code>Query</code> retrieves them
+              together — no join, one network call, predictable latency at any scale. The cost is
+              that you must design your keys around the queries you intend to make, up front. You
+              cannot improvise new query patterns later the way you can with SQL.
+            </p>
+          </div>
+          <div class="note warn">
+            <div class="note-label">Something to notice while you're here</div>
+            <p>
+              The PROFILE row carries a <code>GSI1PK</code> attribute like
+              <code>EMAIL#you@example.com</code> — but the table has <strong>no global secondary
+              index defined</strong>. The code writes a key for an index that does not exist yet.
+              Harmless (it is just an extra attribute), but it means "look up a user by email" does
+              not work today. Worth knowing; not worth fixing until something needs it.
+            </p>
+          </div>
+          <div class="note why">
+            <div class="note-label">Why this is its own service</div>
+            <p>
+              DynamoDB is not "a simpler relational database" — it is a different contract. It
+              guarantees single-digit-millisecond latency at <em>any</em> table size, and the only
+              way to promise that is to forbid the operations whose cost grows with your data:
+              arbitrary joins, ad-hoc filtering, scans as a normal access pattern. There is no query
+              planner to rescue a bad query, because there is no query planner at all — you are it,
+              at design time, when you choose your keys. The second reason it exists separately
+              from RDS is that it fits serverless in a way connection-based databases do not: a
+              relational engine holds a limited pool of stateful connections, which collides badly
+              with Lambda scaling to hundreds of simultaneous environments (RDS Proxy is a whole
+              product built to paper over exactly that). DynamoDB's API is stateless HTTPS requests
+              authorised by IAM — which is also why your function holds no database password to
+              store, leak, or rotate.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>CloudWatch Logs — watch the invocation you already made</h3>
+          <div class="path">Console → <b>CloudWatch</b> → Log groups → <b>/aws/lambda/profileFunction-dev</b></div>
+          <p>
+            Every Lambda invocation writes here automatically — that is what the logs permission in
+            the execution role buys you. Open the most recent log stream and you will see
+            <code>START</code>, then <code>END</code>, then a <code>REPORT</code> line with duration,
+            billed duration, memory used, and — on cold starts — <code>Init Duration</code>.
+          </p>
+          <p>
+            Compare a cold start against a warm one. The first invocation after idle pays for
+            spinning up the Node runtime and loading your modules; subsequent ones reuse it. That is
+            also why the DynamoDB client in <code>dynamoClient.js</code> is cached on
+            <code>global</code> — so a warm invocation skips rebuilding it.
+          </p>
+          <div class="note">
+            <div class="note-label">Where to look when something breaks</div>
+            <p>
+              These logs are where a 500 explains itself. A 401, by contrast, will <em>never</em>
+              appear here — the authorizer rejected the request before Lambda was invoked. If you
+              are debugging an auth failure and the logs are empty, that empty log is itself the
+              diagnosis.
+            </p>
+          </div>
+          <div class="note why">
+            <div class="note-label">Why this is its own service</div>
+            <p>
+              A system assembled from a dozen independent services has no natural place for its
+              telemetry to land. If each service kept its own logs in its own format, correlating
+              one request across API Gateway, Lambda and DynamoDB would be guesswork. CloudWatch is
+              the deliberate account-wide sink, and it keeps three kinds of data apart on purpose:
+              metrics are pre-aggregated numbers that are cheap to query and alarm on, logs are
+              detailed and expensive, events are structured signals. That split is why you can
+              alarm on an error rate without scanning terabytes of text. Being separate also means
+              telemetry outlives what produced it — delete or roll back the function and the logs
+              remain, because they belong to CloudWatch, not to Lambda. And because it is a
+              separate service, writing to it is a distinct IAM grant: a function whose role lacks
+              the logs permission runs perfectly and is silently undebuggable, which is a more
+              common production incident than it has any right to be.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>IAM — read the actual permissions</h3>
+          <div class="path">Lambda → Configuration → Permissions → click the <b>role name</b> link</div>
+          <p>
+            Reaching IAM through the Lambda page saves you hunting for a generated role name. On the
+            role you will find two policies. Open them with the <strong>JSON</strong> toggle and read
+            the <code>Resource</code> lines — both are scoped to specific ARNs, not
+            <code>"*"</code>. The DynamoDB policy names this one table; the logs policy names this
+            one log group.
+          </p>
+          <p>
+            Also read the <strong>Trust relationships</strong> tab: it says
+            <code>lambda.amazonaws.com</code> may assume this role. A role is not attached to
+            anything by default — the trust policy defines who is allowed to become it.
+          </p>
+          <div class="note">
+            <div class="note-label">Least privilege, made concrete</div>
+            <p>
+              If this function were compromised tomorrow, the blast radius is: read and write one
+              DynamoDB table, write some logs. It cannot read your Cognito users, cannot touch S3,
+              cannot spin up EC2. That containment is not automatic — it is the direct result of
+              those scoped <code>Resource</code> ARNs.
+            </p>
+          </div>
+          <div class="note why">
+            <div class="note-label">Why this is its own service</div>
+            <p>
+              IAM is the single authorisation plane for every API call made anywhere in AWS — every
+              request to every service is authenticated and authorised before that service sees it.
+              That only works if there is exactly one such system; had each service invented its own
+              permission model, there would be no way to audit who can reach what, and no single
+              lever to revoke it. It is global rather than regional for the same reason: a role must
+              mean the same thing everywhere. Two design choices follow and are worth internalising.
+              First, deny by default — nothing is permitted until explicitly allowed, which is why a
+              freshly created Lambda can do nothing at all and every capability in this project had
+              to be granted on purpose. Second, roles rather than users: a role is an identity with
+              no permanent credentials, assumed temporarily, which is why there is not a single
+              access key anywhere in this codebase and nothing needs rotating. Set this beside the
+              Cognito note at stop 2 — IAM guards AWS's control plane, Cognito guards your
+              application's front door, and keeping them apart is what stops a compromised app user
+              from becoming a compromised account.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body">
+          <h3>S3 — where the deployment artifacts landed</h3>
+          <div class="path">Console → <b>S3</b> → <b>amplify-nutripilot-dev-66f67-deployment</b></div>
+          <p>
+            Optional, but it closes the loop on how a deploy works. Look in
+            <code>amplify-builds/</code> for your zipped function and layer, and in
+            <code>amplify-cfn-templates/</code> for the CloudFormation templates. The push sequence
+            was: zip locally → upload to this bucket → tell CloudFormation to deploy from these S3
+            keys → CloudFormation calls each service's API. Nothing was uploaded to Lambda directly.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>Reading the status codes</h2>
+    <p>
+      You saw four different responses last night. Each one identifies a specific layer, and knowing
+      which is which will save you hours later.
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Response</th><th>Who produced it</th><th>What it tells you</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>401</code> Unauthorized</td>
+            <td>The Cognito authorizer</td>
+            <td>Token missing, expired, or invalid. Your Lambda never ran. This is the response that proves the authorizer is attached and working.</td>
+          </tr>
+          <tr>
+            <td><code>403</code> Forbidden</td>
+            <td>API Gateway itself</td>
+            <td>Usually "no route matches" — which is what <code>GET /api</code> now returns since you deleted it. Also what an IAM/SigV4-protected route returns, which is why 403 on <code>/profile</code> would mean the wrong auth type got attached.</td>
+          </tr>
+          <tr>
+            <td><code>200</code> but browser error</td>
+            <td>Your Lambda, then the browser</td>
+            <td>The request fully succeeded server-side. The browser blocked JavaScript from reading it because of a missing CORS header. Last night's bug exactly.</td>
+          </tr>
+          <tr>
+            <td><code>502</code> Bad Gateway</td>
+            <td>API Gateway</td>
+            <td>Your Lambda returned something that isn't a valid proxy response — or threw. Check CloudWatch. You haven't hit this one yet; you will eventually.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note pass">
+      <div class="note-label">The verification habit worth keeping</div>
+      <p>
+        Reading a template tells you what was <em>intended</em>. Sending a real request tells you
+        what is <em>true</em>. An anonymous <code>curl</code> returning 401 is stronger evidence
+        that your API is protected than any amount of console inspection, because it exercises the
+        deployed runtime rather than the configuration you hoped got deployed. Try it now — it needs
+        no credentials at all:
+      </p>
+      <pre><code>curl -i https://2s2xf632ej.execute-api.us-east-1.amazonaws.com/dev/profile</code></pre>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>The road not taken: proxy vs. non-proxy integration</h2>
+    <p>
+      Hop 06 explained that <code>aws_proxy</code> makes API Gateway a dumb pipe, and that this is
+      why CORS had to be fixed in the Lambda. That was a choice, and it had a real alternative. It
+      is worth understanding what the other branch looked like, because the same fork appears in
+      almost every API you will build on AWS.
+    </p>
+
+    <h3>What the other branch looks like</h3>
+    <p>
+      A <strong>non-proxy</strong> integration (AWS calls it a <em>custom</em> integration) inverts
+      who owns the HTTP envelope. Instead of handing your function the raw request and returning
+      whatever it produces, API Gateway sits in the middle and translates in both directions. You
+      write a <em>mapping template</em> that turns the incoming HTTP request into exactly the JSON
+      your function wants, and another that turns the function's return value into an HTTP
+      response. You then declare, in the API definition itself, which status codes exist and which
+      headers each one carries.
+    </p>
+    <p>
+      Under that model last night's bug is structurally impossible. CORS headers become part of the
+      declared response, applied uniformly to every route, and a new handler cannot forget them
+      because handlers do not own headers at all. This is also why the console's
+      <strong>"Enable CORS"</strong> button is such a trap on a proxy API: it dutifully writes
+      method-response headers that a proxy integration then ignores completely. The button appears
+      to work. The headers are inert.
+    </p>
+
+    <h3>The trade</h3>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th>Proxy (what we chose)</th><th>Non-proxy</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Who owns the response</td>
+            <td>Your code. Every header and status code is application logic.</td>
+            <td>API Gateway. The envelope is declared configuration.</td>
+          </tr>
+          <tr>
+            <td>CORS</td>
+            <td>Must be emitted per-handler. Enforced only by discipline and tests.</td>
+            <td>Declared once, applied everywhere. Cannot be forgotten.</td>
+          </tr>
+          <tr>
+            <td>Cost of a change</td>
+            <td>Ship Lambda code. One deploy path.</td>
+            <td>Edit templates <em>and</em> redeploy the API. Two deploy paths.</td>
+          </tr>
+          <tr>
+            <td>The mapping language</td>
+            <td>None needed.</td>
+            <td>VTL — untestable locally, undebuggable, failures surface as opaque 500s. Widely considered the worst part of API Gateway.</td>
+          </tr>
+          <tr>
+            <td>One function, many verbs</td>
+            <td>Natural. ANY plus an internal dispatcher, which is our design.</td>
+            <td>Awkward. Wants per-method templates, defeating the point of ANY.</td>
+          </tr>
+          <tr>
+            <td>Portability of the handler</td>
+            <td>Event shape mirrors a normal HTTP request; moves to Express with little work.</td>
+            <td>Handler is coupled to your specific mapping templates.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      One thing that is <em>not</em> a differentiator, despite often being cited as one: request
+      validation against a JSON schema works with either integration type. If you want API Gateway
+      to reject a malformed body before paying for a Lambda invocation, you can have that on a
+      proxy API too.
+    </p>
+
+    <h3>Why proxy was still right here</h3>
+    <p>
+      Two reasons, one structural and one about scale. Structurally, our whole design is one
+      function behind an <strong>ANY</strong> method dispatching on <code>httpMethod</code> —
+      non-proxy would have pushed us back toward per-method mapping templates, dissolving the
+      pattern. And in terms of scale, VTL is a real tax paid on every change, justified when an API
+      is large, long-lived, and maintained by a team that includes people who do not write the
+      handlers. This API has two verbs and one author.
+    </p>
+    <p>
+      So the honest accounting is: we bought a much simpler, more portable, faster-to-change
+      backend, and the price was exactly one thing — response concerns like CORS moved from
+      configuration into application code, where nothing structural prevents forgetting them. That
+      price came due last night.
+    </p>
+
+    <div class="note pass">
+      <div class="note-label">What replaces the guardrail you gave up</div>
+      <p>
+        When you move a concern out of configuration and into code, the discipline has to move with
+        it. That is why the fix was not only the <code>withCorsHeaders</code> helper but a test
+        asserting the header on <em>every</em> dispatch path, including the 405. A missing CORS
+        header is invisible server-side — the request returns 200 and only the browser objects — so
+        it is precisely the class of bug that needs a test rather than a code review.
+      </p>
+    </div>
+
+    <div class="note why">
+      <div class="note-label">There is a third option you did not have</div>
+      <p>
+        API Gateway sells two products. This is a <strong>REST API</strong> (v1). The newer
+        <strong>HTTP API</strong> (v2) is cheaper, faster, and — the relevant part — lets you
+        declare CORS at the API level in a way that <em>does</em> apply to proxy integrations, with
+        API Gateway injecting the headers on the way out. That is genuinely the best of both
+        branches for a case like ours. It was not available to you because Amplify Gen 1's REST API
+        category generates v1 only. Worth knowing for the next project that starts outside Amplify;
+        the tradeoff is that HTTP APIs drop some v1 features, including request validators, usage
+        plans and caching.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>Two safe experiments</h2>
+
+    <details>
+      <summary>Invoke the Lambda directly with a test event</summary>
+      <p style="margin-bottom:0.7rem">
+        On the Lambda page, <strong>Test</strong> tab, create an event with this body. It simulates
+        what API Gateway sends after a successful auth — including the injected claims. Use a
+        made-up <code>sub</code> and it will return an empty profile, touching no real data. Keep it
+        to <code>GET</code>: a <code>POST</code> test event would genuinely write to DynamoDB.
+      </p>
+      <pre><code>{
+  "httpMethod": "GET",
+  "requestContext": {
+    "authorizer": {
+      "claims": { "sub": "test-sub-0000" }
+    }
+  }
+}</code></pre>
+      <p style="margin-top:0.7rem">
+        The point of the exercise: notice that the <code>claims</code> block is just data in a JSON
+        object. Your function trusts it completely. In production, only API Gateway can put a value
+        there — which is precisely why the resource policy restricting who may invoke the function
+        is a security control, not bookkeeping.
+      </p>
+    </details>
+
+    <details>
+      <summary>Watch a request happen live in CloudWatch</summary>
+      <p style="margin-bottom:0.7rem">
+        Open the log group, click <strong>Live Tail</strong> (or just leave the streams list open
+        and refresh), then load the profile page in the app. Watch the invocation appear within a
+        second or two. Then sign out and <code>curl</code> the endpoint anonymously — and watch
+        nothing appear at all, because the authorizer rejected it upstream.
+      </p>
+      <p>
+        Doing both back to back is the clearest possible demonstration of where the auth boundary
+        sits.
+      </p>
+    </details>
+  </section>
+
+  <!-- ============================================================ -->
+  <section>
+    <h2>What transfers to any AWS project</h2>
+    <p>
+      Strip away the NutriPilot names and this is a pattern you will meet constantly. Five ideas
+      here are worth more than the specifics:
+    </p>
+    <ul>
+      <li><strong>Managed auth at the edge.</strong> Validating JWTs is easy to get subtly wrong. Pushing it into API Gateway means unauthenticated traffic never reaches — or bills — your code.</li>
+      <li><strong>Proxy integrations make the gateway a dumb pipe.</strong> Convenient, but it means every response detail, CORS headers included, is your application's responsibility.</li>
+      <li><strong>Two directions of IAM.</strong> Execution role for what your code may reach; resource policy for who may invoke your code. Different questions, different places in the console.</li>
+      <li><strong>Infrastructure as code is the real deliverable.</strong> The console is for looking and diagnosing. Change things in the templates, or your environments drift apart and nothing is reproducible.</li>
+      <li><strong>Design DynamoDB keys around your queries.</strong> Not around your entities. This is the hardest habit to build coming from SQL, and the one that determines whether the table scales.</li>
+    </ul>
+
+    <div class="note">
+      <div class="note-label">Where to go next, if you want to keep learning</div>
+      <p>
+        The natural next stop is <strong>CloudWatch Metrics</strong> for the Lambda — invocations,
+        duration, errors, throttles — and then <strong>AWS X-Ray</strong>, which traces a single
+        request across API Gateway, Lambda and DynamoDB and shows you where the milliseconds went.
+        Neither is wired up here, and neither needs to be yet.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    Identifiers verified against the local Amplify templates and <code>src/aws-exports.js</code> on
+    2026-07-27. Nothing in this document changes any code or any AWS resource.
+    Deeper background on the routing, auth and shared-code decisions lives in
+    <code>docs/decisions/0001-lambda-routing-auth-shared-code.md</code>.
+  </footer>
+
+</div>
+</body>
+</html>

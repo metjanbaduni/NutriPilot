@@ -20,6 +20,8 @@ Stack: React 18 + Vite + Tailwind, AWS Amplify (Cognito, API Gateway, Lambda Nod
   unchecked tasks are not implemented yet; mark `[x]` (and only then) when a task's DoD is met
 - Harness reference (skills, hooks, subagents, how to use them): docs/HARNESS.md.
   Update it in the same commit whenever the harness changes.
+- `docs/learning/` — the PO's own learning notes from past tasks (via /learn). Not agent
+  context; do not read unless the PO explicitly asks you to reference one.
 
 ## Design system — SOURCE OF TRUTH
 - Tokens + component contracts: `docs/design/DESIGN.md` and `docs/design/tokens/*.css`

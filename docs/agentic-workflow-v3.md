@@ -843,6 +843,12 @@ next session inherits the files ← PO approves ← /retro mines the
 
 **When to run:** after each story's quality gate passes — ideally before `/clear`, while the branch and PR are fresh — or immediately after any task that went badly enough that you'd hate to repeat it. `/retro US3` for a story; `/retro T047` for a single painful task. An empty proposal list is a valid outcome: a story that taught nothing new means the gates are working.
 
+### 4.1b The PO's own learning loop: `/learn`
+
+`/retro` closes the loop for the *agent* — it turns a mistake into a gate the next session inherits. `/learn` closes the loop for **you**: it writes one self-contained HTML document into `docs/learning/` explaining a task you just finished — the AWS service or pattern from first principles, a console tour of every real resource it touched, what broke and why it wasn't obvious, the architectural road not taken with its real trade-offs, and two safe experiments you can run against the deployed system. `/learn T046` is the invocation; `docs/learning/t046-profile-api-aws-tour.html` is the reference example every later document matches in structure and voice. It is **optional and PO-invoked only** — no gate waits on it, no skill calls it, and `disable-model-invocation: true` stops the agent triggering it on its own.
+
+**The hard rule: `docs/learning/` is never agent context.** Nothing in AGENTS.md, CLAUDE.md, or tasks.md may reference its contents as instructions, and `/learn` is forbidden from editing those files or any code. The two loops are deliberately separate: what the *agent* must know is a terse rule in a standing file, paid for on every prompt; what *you* want to understand is long, discursive prose that would be pure context cost to an agent. Mixing them makes the standing orders bloat and the learning notes drift into stale pseudo-rules.
+
 ### 4.2 The ritual
 
 Every task follows this loop. Print it.
@@ -982,6 +988,10 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 - [x] 4.0 Create `/groom` + `/design-spec-sync` skills (`.claude/skills/groom/`, `.claude/skills/design-spec-sync/`) — done 2026-07-18 (commit 8baa492)
 - [x] 4.0 Create `docs/HARNESS.md` (harness one-pager; its maintenance rule feeds /ship housekeeping step 6a) — done 2026-07-18 (commit 8baa492)
 - [x] 4.1 Create `/retro` skill (`.claude/skills/retro/`) — done 2026-07-18 (commit 7f04298)
+
+**PO-facing (optional, gates nothing):**
+
+- [ ] 4.1b Create `/learn` skill (`.claude/skills/learn/`) — optional, PO-invoked; output lives in `docs/learning/` and is never agent context
 
 **CODE TRACK (sequential; parallel with the design track):**
 

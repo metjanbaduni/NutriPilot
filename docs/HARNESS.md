@@ -4,7 +4,7 @@
 
 This page inventories what is actually installed in `.claude/` right now, and where each piece fires during normal work. Jargon, one line each: a **skill** is a reusable instruction file you trigger by typing a slash-command (like `/groom`); a **subagent** is a separate AI worker with its own context and a restricted tool list; a **hook** is a script the tool runs automatically at fixed moments — no AI judgment involved.
 
-**Status note (2026-07-18):** `.claude/` currently contains the three skills below and nothing else. The rest of the harness planned in `docs/agentic-workflow-v3.md` Part 3 — settings/permissions, the lint hook, the code-reviewer subagent, `/verify-ui` — is **not installed yet**. Items below are marked *installed* or *planned* accordingly; when a planned item lands, update its entry here (see the maintenance rule).
+**Status note (updated 2026-07-27):** `.claude/` currently contains the four skills below and nothing else. The rest of the harness planned in `docs/agentic-workflow-v3.md` Part 3 — settings/permissions, the lint hook, the code-reviewer subagent, `/verify-ui` — is **not installed yet**. Items below are marked *installed* or *planned* accordingly; when a planned item lands, update its entry here (see the maintenance rule).
 
 ## Skills (installed)
 
@@ -28,6 +28,13 @@ This page inventories what is actually installed in `.claude/` right now, and wh
 - **When:** after a story's quality gate passes (ideally before `/clear`), or immediately after any task that went badly.
 - **Command:** `/retro US2` (or a single task, e.g. `/retro T047`).
 - **Approval gates:** read-only analysis first; it presents a numbered proposal list (with per-proposal context cost and a "considered and rejected" section) and **applies only what you approve** — an empty list is a valid outcome; approved changes ship via `/ship`. Full rationale: workflow-v3 Part 4.1 (the learning loop).
+
+### /learn — `.claude/skills/learn/SKILL.md`
+- **Purpose:** writes a human-facing learning document about a task you just finished — the AWS/architecture concepts from first principles, a console tour of every real resource touched, what broke and why it wasn't obvious, the architectural road not taken, and two safe experiments you can run against the deployed thing. It teaches; it does not review.
+- **When:** entirely optional, after any task you want to understand more deeply. Unrelated to the quality gates — nothing waits on it.
+- **Command:** `/learn T046`.
+- **Approval gates:** none needed — it only ever creates one new file under `docs/learning/` and is forbidden from touching code, AGENTS.md, CLAUDE.md, or tasks.md. `disable-model-invocation: true` means only you can trigger it; no other skill may call it.
+- **Hard rule:** `docs/learning/` is PO-facing only. Nothing in AGENTS.md, CLAUDE.md, or tasks.md may reference its contents as agent context.
 
 ## Subagents
 

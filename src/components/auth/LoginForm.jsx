@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { signIn } from 'aws-amplify/auth';
 import AuthShell from './AuthShell';
+import { getSignInErrorMessage } from '../../utils/errorMessages';
 
 const INVALID_EMAIL_MESSAGE = 'Please enter valid email address.';
 const WEAK_PASSWORD_MESSAGE = 'Password must be 8+ chars with uppercase, lowercase, number.';
-const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateEmail(value) {
@@ -25,10 +25,6 @@ function validatePassword(value) {
     return WEAK_PASSWORD_MESSAGE;
   }
   return '';
-}
-
-function getAuthErrorMessage() {
-  return INVALID_CREDENTIALS_MESSAGE;
 }
 
 function createLoginSubmitHandler({
@@ -61,7 +57,7 @@ function createLoginSubmitHandler({
     try {
       await signIn({ username: trimmedEmail, password });
     } catch (error) {
-      setAuthError(getAuthErrorMessage(error));
+      setAuthError(getSignInErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -1029,7 +1029,7 @@ Autonomy is earned by the harness, not granted by the tool. Each gate you've *wa
 - [ ] 3.8 Create `.claude/skills/kickoff/SKILL.md` — 10 min (same sitting as 3.1–3.6)
 - [ ] Dry run: one trivial change through the full ritual (branch → plan → implement → /verify-ui → /ship → CI → merge) — 30 min
 - [ ] `/verify-ui` audit of the three shipped screens (login, register, settings) against the new design system — findings become task cards
-- [ ] Doc fix — T051 ID collision: lines 263/278/296/314 assign T051 to the US3 seeding script, but T051 is the IAM grant (line 1000, tasks.md); next free ID is **T055** (T049–T054 taken; T054 is the layer-tarball drift gate). Fix before running the US3 Kickoff.
+- [ ] Doc fix — T051 ID collision: lines 263/278/296/314 assign T051 to the US3 seeding script, but T051 is the IAM grant (line 1000, tasks.md); next free ID is **T058** (T049–T057 taken; T054 is the layer-tarball drift gate, T055–T057 the auth-form cosmetics from T047). Fix before running the US3 Kickoff.
 - [ ] 2.3–2.4 US3 Story Kickoff via `/kickoff`, reduced scope per the 2.3 annotation: Demo Gate card + seeding task (T051) + requirement-ID coverage check, approved and committed
 - [ ] `/kickoff` per remaining new story (US4, then the US5+ stories from the full-UI scope decision) — each before its first task
 - [ ] First real task: first card of the approved US3 block per the Part 6 order (T027 backend, or T028 if starting the frontend chain)

@@ -8,6 +8,7 @@ const INVALID_EMAIL_MESSAGE = 'Please enter valid email address.';
 const WEAK_PASSWORD_MESSAGE = 'Password must be 8+ chars with uppercase, lowercase, number.';
 const EMAIL_EXISTS_MESSAGE = 'Email already registered. Please sign in.';
 const CONFIRMATION_ERROR_MESSAGE = 'Unable to confirm account. Please try again.';
+const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 function fillRegistrationForm({ email, password }) {
   fireEvent.change(screen.getByLabelText(/email/i), { target: { value: email } });
@@ -112,7 +113,7 @@ describe('RegisterForm', () => {
     expect(await screen.findByText(EMAIL_EXISTS_MESSAGE)).toBeInTheDocument();
   });
 
-  test('shows server error message when registration fails without code', async () => {
+  test('shows the generic message, not the raw error, when signUp fails uncoded', async () => {
     // Arrange
     signUp.mockRejectedValueOnce(new Error('Registration failed'));
 
@@ -123,7 +124,23 @@ describe('RegisterForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
     // Assert
-    expect(await screen.findByText('Registration failed')).toBeInTheDocument();
+    expect(await screen.findByText(GENERIC_ERROR_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByText('Registration failed')).not.toBeInTheDocument();
+  });
+
+  test('a network failure does not claim the email is already registered', async () => {
+    // Arrange
+    signUp.mockRejectedValueOnce(new Error('Network request failed'));
+
+    renderRegisterForm();
+
+    // Act
+    fillRegistrationForm({ email: 'user@example.com', password: 'StrongPass1' });
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    // Assert
+    expect(await screen.findByText(GENERIC_ERROR_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByText(EMAIL_EXISTS_MESSAGE)).not.toBeInTheDocument();
   });
 
   test('confirm success triggers sign-in', async () => {

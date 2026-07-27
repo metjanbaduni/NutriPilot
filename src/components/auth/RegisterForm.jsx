@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { confirmSignUp, signIn, signUp } from 'aws-amplify/auth';
 import AuthShell from './AuthShell';
+import { getConfirmationErrorMessage, getSignUpErrorMessage } from '../../utils/errorMessages';
 
 const INVALID_EMAIL_MESSAGE = 'Please enter valid email address.';
 const WEAK_PASSWORD_MESSAGE = 'Password must be 8+ chars with uppercase, lowercase, number.';
-const EMAIL_EXISTS_MESSAGE = 'Email already registered. Please sign in.';
-const CONFIRMATION_ERROR_MESSAGE = 'Unable to confirm account. Please try again.';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const EXISTING_ACCOUNT_CODES = new Set(['UsernameExistsException']);
 const INCOMPLETE_SIGNIN_MESSAGE = 'Sign-in requires an additional step. Please try logging in.';
 
 /**
@@ -39,14 +37,6 @@ function validatePassword(value) {
     return WEAK_PASSWORD_MESSAGE;
   }
   return '';
-}
-
-function getRegistrationErrorMessage(error) {
-  const code = error?.code || error?.name;
-  if (code && EXISTING_ACCOUNT_CODES.has(code)) {
-    return EMAIL_EXISTS_MESSAGE;
-  }
-  return error?.message || EMAIL_EXISTS_MESSAGE;
 }
 
 function needsAdditionalSignInStep(result) {
@@ -177,7 +167,7 @@ function createRegisterHandler({
       await signUp({ username: trimmedEmail, password });
       setStep('confirm');
     } catch (error) {
-      setAuthError(getRegistrationErrorMessage(error));
+      setAuthError(getSignUpErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -210,8 +200,8 @@ function createConfirmHandler({
       if (typeof onAuthenticated === 'function') {
         onAuthenticated();
       }
-    } catch {
-      setAuthError(CONFIRMATION_ERROR_MESSAGE);
+    } catch (error) {
+      setAuthError(getConfirmationErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

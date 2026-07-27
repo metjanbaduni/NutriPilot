@@ -18,6 +18,9 @@ const VALID_PROFILE_INPUT = {
   goal: 'bulk',
 };
 
+const SESSION_EXPIRED_MESSAGE = 'Your session has expired. Please sign in again.';
+const PROFILE_SAVE_ERROR_MESSAGE = 'Unable to save profile.';
+
 const CALCULATED_TARGETS = {
   proteinGrams: 180,
   carbGrams: 360,
@@ -193,5 +196,39 @@ describe('ProfileForm', () => {
     expect(screen.getByText(/2875 kcal/i)).toBeInTheDocument();
     expect(screen.getByText(/protein/i)).toBeInTheDocument();
     expect(screen.getByText(/180 g/i)).toBeInTheDocument();
+  });
+
+  test('maps an expired session to a friendly message on save failure', async () => {
+    // Arrange
+    const error = Object.assign(new Error('Unauthorized: token expired for pool us-east-1_Egiq'), {
+      statusCode: 401,
+    });
+    saveProfile.mockRejectedValueOnce(error);
+    render(<ProfileForm />);
+    fillRequiredFields();
+
+    // Act
+    fireEvent.click(screen.getByRole('button', { name: /recalculate targets/i }));
+
+    // Assert
+    expect(await screen.findByText(SESSION_EXPIRED_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByText(/token expired/i)).not.toBeInTheDocument();
+  });
+
+  test('falls back to the save message without leaking the backend message', async () => {
+    // Arrange
+    const error = Object.assign(new Error('DynamoDB ValidationException: key schema mismatch'), {
+      statusCode: 500,
+    });
+    saveProfile.mockRejectedValueOnce(error);
+    render(<ProfileForm />);
+    fillRequiredFields();
+
+    // Act
+    fireEvent.click(screen.getByRole('button', { name: /recalculate targets/i }));
+
+    // Assert
+    expect(await screen.findByText(PROFILE_SAVE_ERROR_MESSAGE)).toBeInTheDocument();
+    expect(screen.queryByText(/DynamoDB|ValidationException/i)).not.toBeInTheDocument();
   });
 });

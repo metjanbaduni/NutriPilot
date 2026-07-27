@@ -570,6 +570,12 @@ no longer exist.
   - Tests: N/A (build tooling) — acceptance step 3 is the test; record its output in the commit.
   - DoD: `npm run verify` passes; steps 1–3 all executed, not merely described.
 
+- [ ] T055 Extract the duplicated `validateEmail` / `validatePassword` / `EMAIL_PATTERN` out of `LoginForm.jsx` and `RegisterForm.jsx` into one shared module (audit cosmetic item; deferred from T047, which shared only the error mapping)
+
+- [ ] T056 Replace `<a href="/login">` / `<a href="/signup">` with router `<Link>` in `LoginForm.jsx` and `RegisterForm.jsx` — they currently trigger full page reloads (audit cosmetic item)
+
+- [ ] T057 Stop enforcing the full password policy on the login form (`LoginForm.jsx`) — it blocks sign-in before Cognito sees it and reveals the policy; validate non-empty only (audit cosmetic item)
+
 ---
 
 ## Final Phase: Polish & Cross-Cutting Concerns
@@ -580,7 +586,7 @@ no longer exist.
 - [x] T044 Add `verify` npm script chaining `lint`, `test`, and `format:check` plus document it in `package.json`
 - [ ] T045 Update `README.md` quickstart + deployment sections to mirror `specs/000-planning-phase/quickstart.md`
 
-- [ ] T047 Fix user-facing error messages in auth + profile forms
+- [x] T047 Fix user-facing error messages in auth + profile forms
   - Files: `src/components/auth/LoginForm.jsx`, `src/components/auth/RegisterForm.jsx`,
     `src/components/profile/ProfileForm.jsx`
   - Notes: Map known Cognito error codes (UserNotConfirmedException, UsernameExistsException,
@@ -590,6 +596,17 @@ no longer exist.
   - Acceptance: network failure no longer shows "Email already registered"; unconfirmed user is told
     to confirm; no raw Amplify/backend message reaches the UI.
   - DoD: `npm run verify`.
+  - Done 2026-07-27: mapping extracted to `src/utils/errorMessages.js` (100% covered) and consumed by
+    all three forms. `npm run verify` + `npm run build` pass; 142 tests (was 102), coverage 95.6% /
+    84.69% branches (was 95.3% / 83.74%). Grep guard confirms no `error.message` reaches any
+    `set*Error*` call in `src/components/` or `src/hooks/`.
+    `UserNotConfirmedException` deliberately reveals that an account exists — accepted trade-off,
+    rationale recorded in the `SIGN_IN_MESSAGES` JSDoc so it is not "hardened" back into a dead end.
+    The confirmation fallback kept its specific "Unable to confirm account" text rather than
+    regressing to the generic message. Out-of-scope audit cosmetics split out as T055–T057.
+    **Gap: the manual wifi-disconnect check was not executed** — the equivalent scenario is covered
+    by the automated test "a network failure does not claim the email is already registered", but no
+    live browser observation was made.
 
 - [x] T048 [P] Enforcement gaps: lint rules + CI
   - Files: `eslint.config.js`, `.eslintrc.js` (delete), `.github/workflows/ci.yml` (new)

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { saveProfile } from '../../api/profile';
 import { ProfileProvider, useProfile } from '../../hooks/useProfile';
+import { getApiErrorMessage } from '../../utils/errorMessages';
 
 const REQUIRED_FIELD_MESSAGE = 'This field is required.';
 const PROFILE_SAVE_SUCCESS_MESSAGE = 'Profile saved successfully.';
@@ -394,7 +395,7 @@ function createRecalculateHandler({
       setTargets(response?.targets || null);
       setStatusMessage(PROFILE_SAVE_SUCCESS_MESSAGE);
     } catch (error) {
-      setErrorMessage(error?.message || PROFILE_SAVE_ERROR_MESSAGE);
+      setErrorMessage(getApiErrorMessage(error, PROFILE_SAVE_ERROR_MESSAGE));
     } finally {
       setIsSaving(false);
     }
